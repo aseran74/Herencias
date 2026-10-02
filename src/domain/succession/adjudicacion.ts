@@ -21,7 +21,9 @@ export function calcularAdjudicacion(
   for (const inmueble of input.inmuebles) {
     const valorNetoCent = aplicarBps(
       inmueble.valorCent - inmueble.cargasCent,
-      inmueble.porcentajeCausanteBps,
+      input.regimenEconomico === 'gananciales' && inmueble.naturaleza === 'ganancial'
+        ? 5_000
+        : inmueble.porcentajeCausanteBps,
     )
     const reparto = input.adjudicaciones
       .filter(item => item.inmuebleId === inmueble.id)

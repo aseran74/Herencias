@@ -33,19 +33,28 @@ function datosMonetariosValidos(input: Input): boolean {
   return valores.every(Number.isSafeInteger)
 }
 
+function participacionCausanteBps(
+  input: Input,
+  activo: { naturaleza: 'ganancial' | 'privativo' | 'otra'; porcentajeCausanteBps: number },
+): number {
+  return input.regimenEconomico === 'gananciales' && activo.naturaleza === 'ganancial'
+    ? 5_000
+    : activo.porcentajeCausanteBps
+}
+
 export function calcularCaudal(input: Input): number | null {
   if (!datosMonetariosValidos(input)) return null
 
   const inmuebles = input.inmuebles.reduce(
     (total, inmueble) => total + aplicarBps(
       inmueble.valorCent - inmueble.cargasCent,
-      inmueble.porcentajeCausanteBps,
+      participacionCausanteBps(input, inmueble),
     ),
     0,
   )
   const otrosActivos = input.otrosActivos.reduce(
     (total, activo) =>
-      total + aplicarBps(activo.valorCent, activo.porcentajeCausanteBps),
+      total + aplicarBps(activo.valorCent, participacionCausanteBps(input, activo)),
     0,
   )
   const donaciones = input.donaciones.reduce(
@@ -55,6 +64,22 @@ export function calcularCaudal(input: Input): number | null {
 
   const caudal = inmuebles + otrosActivos - input.deudasCent + donaciones
   return Number.isSafeInteger(caudal) ? caudal : null
+}
+
+export function calcularParteConyugeGanancial(input: Input): number {
+  if (input.situacionConyugal !== 'conyuge_vivo' || input.regimenEconomico !== 'gananciales') return 0
+
+  const inmuebles = input.inmuebles
+    .filter(inmueble => inmueble.naturaleza === 'ganancial')
+    .reduce((total, inmueble) => {
+      const neto = Math.max(0, inmueble.valorCent - inmueble.cargasCent)
+      return total + neto - aplicarBps(neto, 5_000)
+    }, 0)
+  const otrosActivos = input.otrosActivos
+    .filter(activo => activo.naturaleza === 'ganancial')
+    .reduce((total, activo) => total + activo.valorCent - aplicarBps(activo.valorCent, 5_000), 0)
+
+  return inmuebles + otrosActivos
 }
 
 export function calcularTercios(caudalCent: number): Tercios {
@@ -146,6 +171,7 @@ function resultadoSinReparto(
   motivos: Resultado['motivos'] = [],
   errores: Resultado['errores'] = [],
   tercios: Tercios | null = null,
+  parteConyugeGanancialCent = 0,
 ): Resultado {
   return {
     estado,
@@ -153,7 +179,9 @@ function resultadoSinReparto(
     avisos: [],
     motivos,
     caudalCent,
+    parteConyugeGanancialCent,
     tercios,
+    usufructoConyuge: null,
     porHeredero: [],
     adjudicacion: [],
     patrimonioPendienteAdjudicarCent: 0,
@@ -162,9 +190,10 @@ function resultadoSinReparto(
 
 export function calcularSucesion(input: Input): Resultado {
   const caudalCent = calcularCaudal(input)
+  const parteConyugeGanancialCent = calcularParteConyugeGanancial(input)
   const motivos = detectarCasosBloqueantes(input)
   if (motivos.length > 0) {
-    return resultadoSinReparto('revision_obligatoria', caudalCent, motivos)
+    return resultadoSinReparto('revision_obligatoria', caudalCent, motivos, [], null, parteConyugeGanancialCent)
   }
 
   if (caudalCent === null || caudalCent <= 0) {
@@ -173,13 +202,15 @@ export function calcularSucesion(input: Input): Resultado {
       caudalCent,
       [],
       ['CAUDAL_NO_POSITIVO'],
+      null,
+      parteConyugeGanancialCent,
     )
   }
 
   const tercios = calcularTercios(caudalCent)
   const errores = validarInput(input)
   if (errores.length > 0) {
-    return resultadoSinReparto('error', caudalCent, [], errores, tercios)
+    return resultadoSinReparto('error', caudalCent, [], errores, tercios, parteConyugeGanancialCent)
   }
 
   const ramas = estirpes(input)
@@ -192,6 +223,18 @@ export function calcularSucesion(input: Input): Resultado {
     : repartirPorBps(tercios.libreCent, input.disposiciones.libre)
   const nombres = mapaNombres(input)
   const porHeredero = crearDesglose(estricta, mejora, libre, nombres)
+  const usufructoConyuge = input.situacionConyugal === 'conyuge_vivo'
+    ? {
+        baseMejoraCent: tercios.mejoraCent,
+        porDescendiente: porHeredero
+          .filter(persona => persona.mejoraCent > 0)
+          .map(persona => ({
+            herederoId: persona.herederoId,
+            nombre: persona.nombre,
+            baseUsufructoCent: persona.mejoraCent,
+          })),
+      }
+    : null
   const calculoAdjudicacion = calcularAdjudicacion(
     input,
     porHeredero,
@@ -212,7 +255,9 @@ export function calcularSucesion(input: Input): Resultado {
     avisos,
     motivos: [],
     caudalCent,
+    parteConyugeGanancialCent,
     tercios,
+    usufructoConyuge,
     porHeredero,
     adjudicacion: calculoAdjudicacion.detalle,
     patrimonioPendienteAdjudicarCent:

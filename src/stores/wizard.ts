@@ -56,10 +56,7 @@ export const useWizardStore = defineStore('succession-wizard', () => {
   function validarPaso(numero = paso.value): string[] {
     if (numero === 1) {
       if (!input.value.situacionConyugal) return ['Indica la situación conyugal del causante.']
-      if (
-        (input.value.situacionConyugal === 'conyuge_vivo' || input.value.situacionConyugal === 'viudo')
-        && input.value.regimenEconomico === 'soltero_viudo'
-      ) {
+      if (input.value.situacionConyugal === 'conyuge_vivo' && input.value.regimenEconomico === 'soltero_viudo') {
         return ['Indica el régimen económico del matrimonio.']
       }
       return []

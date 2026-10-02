@@ -25,7 +25,7 @@ export function detectarAvisos(input: Input): CodigoAviso[] {
   if (input.hijos.some(hijo => !hijo.vive && hijo.descendientes.length > 0)) {
     avisos.push('REPRESENTACION_PREMORIENCIA')
   }
-  if (input.conyugeViudo) {
+  if (input.situacionConyugal === 'conyuge_vivo') {
     avisos.push('CONYUGE_VIUDO_USUFRUCTO_MEJORA')
   }
   if (input.regimenEconomico === 'gananciales') {

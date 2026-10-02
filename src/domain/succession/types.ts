@@ -54,6 +54,7 @@ export interface Hijo {
 export interface Inmueble {
   id: string
   nombre: string
+  naturaleza: 'ganancial' | 'privativo' | 'otra'
   valorCent: number
   porcentajeCausanteBps: number
   cargasCent: number
@@ -62,6 +63,7 @@ export interface Inmueble {
 export interface OtroActivo {
   id: string
   tipo: 'fondo' | 'deposito' | 'cuenta' | 'otro'
+  naturaleza: 'ganancial' | 'privativo' | 'otra'
   valorCent: number
   porcentajeCausanteBps: number
 }
@@ -180,7 +182,16 @@ export interface Resultado {
   avisos: CodigoAviso[]
   motivos: MotivoRevision[]
   caudalCent: number | null
+  parteConyugeGanancialCent: number
   tercios: Tercios | null
+  usufructoConyuge: {
+    baseMejoraCent: number
+    porDescendiente: Array<{
+      herederoId: string
+      nombre: string
+      baseUsufructoCent: number
+    }>
+  } | null
   porHeredero: DesgloseHeredero[]
   adjudicacion: ResultadoAdjudicacion[]
   patrimonioPendienteAdjudicarCent: number

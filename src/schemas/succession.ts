@@ -16,6 +16,7 @@ export const inputSucesionSchema = z.object({
   inmuebles: z.array(z.object({
     id,
     nombre: z.string().trim().min(1).max(160),
+    naturaleza: z.enum(['ganancial', 'privativo', 'otra']).default('privativo'),
     valorCent: centimos,
     porcentajeCausanteBps: bps,
     cargasCent: centimos,
@@ -23,6 +24,7 @@ export const inputSucesionSchema = z.object({
   otrosActivos: z.array(z.object({
     id,
     tipo: z.enum(['fondo', 'deposito', 'cuenta', 'otro']),
+    naturaleza: z.enum(['ganancial', 'privativo', 'otra']).default('privativo'),
     valorCent: centimos,
     porcentajeCausanteBps: bps,
   })).max(30),

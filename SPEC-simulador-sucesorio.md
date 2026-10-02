@@ -21,8 +21,8 @@ Fuera de v1: derecho foral, ascendientes, cónyuge sin hijos, valoración del us
 - **R6 (arts. 761, 814 CC):** descendientes de hijo premuerto ocupan su estirpe y dividen por igual.
 - **R7:** premuerto sin descendientes no forma estirpe.
 - **R8:** mejora y/o libre no dispuestas se reparten por igual entre estirpes.
-- **R9 (art. 834 CC):** cónyuge viudo no separado con descendientes: aviso de usufructo sobre mejora; v1 no lo valora.
-- **R10:** en gananciales solo se computa la participación del causante; cada activo lleva `porcentajeCausanteBps`.
+- **R9 (art. 834 CC):** cónyuge viudo no separado con descendientes: usufructo legal sobre el tercio de mejora. Se muestra la base total y su desglose por descendiente, pero v1 no valora económicamente el usufructo.
+- **R10 (art. 1392 CC):** en bienes gananciales, la mitad neta del cónyuge queda fuera de la herencia y solo la mitad del causante integra el caudal. Los bienes pueden marcarse como gananciales, privativos u otra titularidad.
 - **R11 (arts. 841 ss., 1062 CC):** compensación por indivisibilidad solo informativa.
 - **R12:** aplica la vecindad civil, no la residencia.
 
@@ -84,6 +84,7 @@ export interface Hijo {
 export interface Inmueble {
   id: string
   nombre: string
+  naturaleza: 'ganancial' | 'privativo' | 'otra'
   valorCent: number
   porcentajeCausanteBps: number
   cargasCent: number
@@ -91,6 +92,7 @@ export interface Inmueble {
 export interface OtroActivo {
   id: string
   tipo: 'fondo' | 'deposito' | 'cuenta' | 'otro'
+  naturaleza: 'ganancial' | 'privativo' | 'otra'
   valorCent: number
   porcentajeCausanteBps: number
 }

@@ -21,6 +21,7 @@ function inputBase(caudalCent = 2_100_000 * EUR): Input {
     otrosActivos: [{
       id: 'activo',
       tipo: 'cuenta',
+      naturaleza: 'privativo',
       valorCent: caudalCent,
       porcentajeCausanteBps: 10_000,
     }],
@@ -194,12 +195,15 @@ describe('núcleo sucesorio', () => {
   it('T10 R10 pondera la participación del causante en gananciales', () => {
     const input = inputBase()
     input.situacionConyugal = 'conyuge_vivo'
+    input.conyugeViudo = true
     input.regimenEconomico = 'gananciales'
+    input.otrosActivos[0]!.naturaleza = 'ganancial'
     input.otrosActivos[0]!.porcentajeCausanteBps = 5_000
 
     const resultado = calcularSucesion(input)
 
     expect(resultado.caudalCent).toBe(1_050_000 * EUR)
+    expect(resultado.parteConyugeGanancialCent).toBe(1_050_000 * EUR)
     expect(resultado.tercios?.estrictaCent).toBe(350_000 * EUR)
     expect(resultado.avisos).toContain('REGIMEN_GANANCIALES')
   })
@@ -225,6 +229,11 @@ describe('núcleo sucesorio', () => {
     expect(conConyuge.avisos)
       .toContain('CONYUGE_VIUDO_USUFRUCTO_MEJORA')
     expect(conConyuge.porHeredero).toEqual(sinConyuge.porHeredero)
+    expect(conConyuge.usufructoConyuge?.baseMejoraCent).toBe(700_000 * EUR)
+    expect(conConyuge.usufructoConyuge?.porDescendiente.reduce(
+      (total, persona) => total + persona.baseUsufructoCent,
+      0,
+    )).toBe(700_000 * EUR)
   })
 
   it('T13 R11 calcula adjudicación neta y diferencias informativas', () => {
@@ -234,6 +243,7 @@ describe('núcleo sucesorio', () => {
       {
         id: 'i1',
         nombre: 'Casa',
+        naturaleza: 'privativo',
         valorCent: 1_200_000 * EUR,
         porcentajeCausanteBps: 10_000,
         cargasCent: 0,
@@ -241,6 +251,7 @@ describe('núcleo sucesorio', () => {
       {
         id: 'i2',
         nombre: 'Piso',
+        naturaleza: 'privativo',
         valorCent: 900_000 * EUR,
         porcentajeCausanteBps: 10_000,
         cargasCent: 0,
@@ -315,6 +326,7 @@ describe('núcleo sucesorio', () => {
     input.inmuebles = [{
       id: 'i1',
       nombre: 'Casa',
+      naturaleza: 'privativo',
       valorCent: 100_000,
       porcentajeCausanteBps: 10_000,
       cargasCent: 0,
@@ -334,6 +346,7 @@ describe('núcleo sucesorio', () => {
     input.inmuebles = [{
       id: 'i1',
       nombre: 'Casa compartida',
+      naturaleza: 'otra',
       valorCent: 1_000_000,
       porcentajeCausanteBps: 5_000,
       cargasCent: 200_000,

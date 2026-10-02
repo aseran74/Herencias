@@ -44,7 +44,7 @@ function situacionPersonal(input: Input): string {
     return `casado y con su cónyuge vivo, en ${REGIMEN_ECONOMICO[input.regimenEconomico]}`
   }
   if (input.situacionConyugal === 'viudo') {
-    return `viudo, cuyo matrimonio se rigió por ${REGIMEN_ECONOMICO[input.regimenEconomico]}`
+    return 'viudo'
   }
   if (input.situacionConyugal === 'separado_divorciado') return 'divorciado o separado'
   if (input.situacionConyugal === 'soltero') return 'soltero'
@@ -161,10 +161,17 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
     })
   }
 
-  if (input.conyugeViudo) {
+  if (resultado.parteConyugeGanancialCent > 0) {
+    clausulas.push({
+      titulo: 'Liquidación de gananciales',
+      parrafos: ['La mitad neta de los bienes identificados como gananciales corresponde al cónyuge y queda fuera de la herencia. Solo la mitad atribuible al causante integra el caudal hereditario.'],
+    })
+  }
+
+  if (input.situacionConyugal === 'conyuge_vivo') {
     clausulas.push({
       titulo: 'Cónyuge viudo',
-      parrafos: ['Se hace constar que el cónyuge viudo puede tener el usufructo del tercio de mejora. Este borrador no lo valora; lo fijará el notario.'],
+      parrafos: ['Se reconoce al cónyuge no separado el usufructo legal del tercio de mejora. Este borrador define la base en porcentaje, pero no valora económicamente el usufructo; lo concretará el notario.'],
     })
   }
 

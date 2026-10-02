@@ -7,7 +7,7 @@ const input: Input = {
   situacionConyugal: 'soltero',
   regimenEconomico: 'soltero_viudo',
   inmuebles: [],
-  otrosActivos: [{ id: 'c', tipo: 'cuenta', valorCent: 18_000_000, porcentajeCausanteBps: 10_000 }],
+  otrosActivos: [{ id: 'c', tipo: 'cuenta', naturaleza: 'privativo', valorCent: 18_000_000, porcentajeCausanteBps: 10_000 }],
   deudasCent: 0,
   donaciones: [],
   hijos: [{ id: 'ana', nombre: 'Ana', vive: true, descendientes: [] }],

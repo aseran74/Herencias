@@ -101,8 +101,38 @@ async function guardarSimulacion() {
     <p class="kicker">11 · Resumen</p>
     <h2 id="titulo-resumen">{{ store.resultado.estado === 'revision_obligatoria' ? 'Tu caso requiere revisión' : 'Resultado orientativo' }}</h2>
 
+    <section
+      v-if="store.input.situacionConyugal === 'conyuge_vivo' && store.resultado.caudalCent !== null"
+      class="lectura-conyuge"
+      aria-labelledby="lectura-resultado-conyuge"
+    >
+      <p class="kicker">Cómo leer el resultado</p>
+      <h3 id="lectura-resultado-conyuge">El cónyuge aparece en dos momentos distintos</h3>
+      <div class="flujo-conyuge">
+        <article v-if="store.input.regimenEconomico === 'gananciales'">
+          <span>1 · Liquidación de gananciales</span>
+          <strong>{{ centimosAEuros(store.resultado.parteConyugeGanancialCent) }}</strong>
+          <p>Es la mitad neta de los bienes marcados como gananciales. Ya pertenece al cónyuge y queda fuera de la herencia.</p>
+        </article>
+        <article>
+          <span>{{ store.input.regimenEconomico === 'gananciales' ? '2' : '1' }} · Herencia del causante</span>
+          <strong>{{ centimosAEuros(store.resultado.caudalCent) }}</strong>
+          <p>Es lo que se divide en legítima estricta, mejora y libre disposición.</p>
+        </article>
+        <article v-if="store.resultado.usufructoConyuge">
+          <span>{{ store.input.regimenEconomico === 'gananciales' ? '3' : '2' }} · Usufructo viudal</span>
+          <strong>Sobre {{ centimosAEuros(store.resultado.usufructoConyuge.baseMejoraCent) }}</strong>
+          <p>Esta cifra es la base afectada por el usufructo, no dinero adicional para el cónyuge. No se ha calculado su valor económico.</p>
+        </article>
+      </div>
+    </section>
+
     <div v-if="store.resultado.caudalCent !== null" class="magnitudes">
-      <div><span>Caudal</span><strong>{{ centimosAEuros(store.resultado.caudalCent) }}</strong></div>
+      <div v-if="store.resultado.parteConyugeGanancialCent > 0" class="magnitud-conyuge">
+        <span>Mitad ganancial del cónyuge · fuera de la herencia</span>
+        <strong>{{ centimosAEuros(store.resultado.parteConyugeGanancialCent) }}</strong>
+      </div>
+      <div><span>Caudal hereditario del causante</span><strong>{{ centimosAEuros(store.resultado.caudalCent) }}</strong></div>
       <template v-if="store.resultado.tercios">
         <div><span>Estricta</span><strong>{{ centimosAEuros(store.resultado.tercios.estrictaCent) }}</strong></div>
         <div><span>Mejora</span><strong>{{ centimosAEuros(store.resultado.tercios.mejoraCent) }}</strong></div>
@@ -150,6 +180,22 @@ async function guardarSimulacion() {
           </p>
         </article>
       </div>
+      <section v-if="store.resultado.usufructoConyuge" class="usufructo-conyuge" data-testid="usufructo-conyuge">
+        <p class="kicker">Derecho legal del cónyuge</p>
+        <h3>Usufructo del tercio de mejora</h3>
+        <p>
+          La base sometida al usufructo es
+          <strong>{{ centimosAEuros(store.resultado.usufructoConyuge.baseMejoraCent) }}</strong>.
+          No es una cantidad adicional ni una valoración económica del usufructo.
+        </p>
+        <ul class="lista-limpia">
+          <li v-for="persona in store.resultado.usufructoConyuge.porDescendiente" :key="persona.herederoId">
+            <span>Mejora atribuida a {{ persona.nombre }}</span>
+            <strong>{{ centimosAEuros(persona.baseUsufructoCent) }}</strong>
+          </li>
+        </ul>
+        <p class="nota">Estas atribuciones a los descendientes quedan sujetas al usufructo legal del cónyuge no separado. Su valoración requiere revisión profesional.</p>
+      </section>
       <ul v-if="store.resultado.avisos.length" class="avisos">
         <li v-for="aviso in store.resultado.avisos" :key="aviso">{{ etiquetasAviso[aviso] }}</li>
       </ul>

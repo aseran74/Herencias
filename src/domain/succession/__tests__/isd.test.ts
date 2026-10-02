@@ -7,7 +7,7 @@ function entrada(comunidad: Input['comunidadIsd'], extra: Partial<Input> = {}): 
     situacionConyugal: 'soltero',
     regimenEconomico: 'separacion_bienes',
     inmuebles: [],
-    otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 20_000_000, porcentajeCausanteBps: 10_000 }],
+    otrosActivos: [{ id: 'activo', tipo: 'cuenta', naturaleza: 'privativo', valorCent: 20_000_000, porcentajeCausanteBps: 10_000 }],
     deudasCent: 0,
     donaciones: [],
     hijos: [{ id: 'ana', nombre: 'Ana', vive: true, descendientes: [] }],
@@ -56,7 +56,7 @@ describe('estimación ISD', () => {
 
   it('trata a un nieto de libre disposición como grupo II si se marca descendiente', () => {
     const input = entrada('madrid', {
-      otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
+      otrosActivos: [{ id: 'activo', tipo: 'cuenta', naturaleza: 'privativo', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
       beneficiariosLibre: [{ id: 'lucas', nombre: 'Lucas Serrano', tipo: 'persona', parentesco: 'descendiente' }],
       disposiciones: { mejora: null, libre: [{ herederoId: 'lucas', bps: 10_000 }] },
     })
@@ -66,7 +66,7 @@ describe('estimación ISD', () => {
 
   it('trata a un sobrino como grupo III, por debajo del extraño', () => {
     const base = {
-      otrosActivos: [{ id: 'activo', tipo: 'cuenta' as const, valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
+      otrosActivos: [{ id: 'activo', tipo: 'cuenta' as const, naturaleza: 'privativo' as const, valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
       disposiciones: { mejora: null, libre: [{ herederoId: 'lucas', bps: 10_000 }] },
     }
     const sobrino = entrada('madrid', {
@@ -86,7 +86,7 @@ describe('estimación ISD', () => {
 
   it('trata a una entidad de libre disposición como grupo IV', () => {
     const input = entrada('madrid', {
-      otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
+      otrosActivos: [{ id: 'activo', tipo: 'cuenta', naturaleza: 'privativo', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
       beneficiariosLibre: [{ id: 'ong', nombre: 'ONG', tipo: 'entidad' }],
       disposiciones: { mejora: null, libre: [{ herederoId: 'ong', bps: 10_000 }] },
     })

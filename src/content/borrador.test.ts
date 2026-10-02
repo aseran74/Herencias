@@ -7,7 +7,7 @@ function entrada(extra: Partial<Input> = {}): Input {
     regimen: 'comun',
     situacionConyugal: 'soltero',
     regimenEconomico: 'soltero_viudo',
-    inmuebles: [{ id: 'casa', nombre: 'Vivienda', valorCent: 210_000_000, porcentajeCausanteBps: 10_000, cargasCent: 0 }],
+    inmuebles: [{ id: 'casa', nombre: 'Vivienda', naturaleza: 'privativo', valorCent: 210_000_000, porcentajeCausanteBps: 10_000, cargasCent: 0 }],
     otrosActivos: [],
     deudasCent: 0,
     donaciones: [],
