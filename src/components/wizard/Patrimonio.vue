@@ -33,9 +33,9 @@ function texto(id: string) {
       <div class="tarjeta-cabecera"><h3>Inmueble {{ indice + 1 }}</h3><button class="texto" type="button" @click="store.input.inmuebles.splice(indice, 1)">Eliminar</button></div>
       <div class="rejilla">
         <label>Descripción<input v-model="bien.nombre" :data-testid="`inmueble-nombre-${indice}`" placeholder="Vivienda habitual"></label>
-        <label>Valor (€)<input v-model="texto(bien.id).valor" inputmode="decimal" :data-testid="`inmueble-valor-${indice}`" @input="dinero(texto(bien.id).valor, v => bien.valorCent = v)"></label>
+        <label>Valor (€)<input v-model="texto(bien.id).valor" inputmode="decimal" :data-testid="`inmueble-valor-${indice}`" @input="dinero(($event.target as HTMLInputElement).value, v => bien.valorCent = v)"></label>
         <label>Participación del causante (%)<input :value="bien.porcentajeCausanteBps / 100" type="number" min="0" max="100" step="0.01" @input="bien.porcentajeCausanteBps = Math.round(Number(($event.target as HTMLInputElement).value) * 100)"></label>
-        <label>Cargas (€)<input v-model="texto(bien.id).cargas" inputmode="decimal" @input="dinero(texto(bien.id).cargas, v => bien.cargasCent = v)"></label>
+        <label>Cargas (€)<input v-model="texto(bien.id).cargas" inputmode="decimal" @input="dinero(($event.target as HTMLInputElement).value, v => bien.cargasCent = v)"></label>
       </div>
     </div>
     <button type="button" class="secundario" data-testid="anadir-inmueble" @click="nuevoInmueble">+ Añadir inmueble</button>

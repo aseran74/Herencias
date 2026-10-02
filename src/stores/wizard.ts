@@ -55,9 +55,12 @@ export const useWizardStore = defineStore('succession-wizard', () => {
   function validarPaso(numero = paso.value): string[] {
     if (numero === 1) return []
     if (numero === 2) {
-      const hayActivo = input.value.inmuebles.some(i => i.nombre.trim() && i.valorCent > 0)
-        || input.value.otrosActivos.some(a => a.valorCent > 0)
-      return hayActivo ? [] : ['Añade al menos un activo con valor.']
+      const inmuebleConValor = input.value.inmuebles.find(i => i.valorCent > 0)
+      if (inmuebleConValor && !inmuebleConValor.nombre.trim()) {
+        return ['Escribe una descripción para el inmueble.']
+      }
+      const hayActivo = Boolean(inmuebleConValor) || input.value.otrosActivos.some(a => a.valorCent > 0)
+      return hayActivo ? [] : ['Añade al menos un activo con un valor superior a 0 €.']
     }
     if (numero === 3) {
       return descendientes.value.length ? [] : ['Añade un hijo vivo o nietos de un hijo premuerto.']

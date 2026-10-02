@@ -54,6 +54,20 @@ describe('wizard', () => {
     expect(wrapper.text()).not.toContain('Reparto por heredero')
   })
 
+  it('acepta un importe pegado con formato español', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
+
+    await wrapper.get('[data-testid="continuar"]').trigger('click')
+    await wrapper.get('[data-testid="anadir-inmueble"]').trigger('click')
+    await wrapper.get('[data-testid="inmueble-nombre-0"]').setValue('Vivienda')
+    await wrapper.get('[data-testid="inmueble-valor-0"]').setValue('2.100.000,00')
+    await wrapper.get('[data-testid="continuar"]').trigger('click')
+
+    expect(wrapper.text()).toContain('Descendientes y ramas familiares')
+  })
+
   it('no premarca el consentimiento RGPD', async () => {
     const pinia = createPinia()
     setActivePinia(pinia)
