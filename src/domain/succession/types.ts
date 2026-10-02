@@ -12,6 +12,12 @@ export type RegimenEconomico =
   | 'separacion_bienes'
   | 'soltero_viudo'
 
+export type SituacionConyugal =
+  | 'conyuge_vivo'
+  | 'viudo'
+  | 'soltero'
+  | 'separado_divorciado'
+
 export type ComunidadIsd =
   | 'andalucia'
   | 'aragon'
@@ -90,6 +96,7 @@ export interface Adjudicacion {
 
 export interface Input {
   regimen: Regimen
+  situacionConyugal: SituacionConyugal | null
   regimenEconomico: RegimenEconomico
   inmuebles: Inmueble[]
   otrosActivos: OtroActivo[]

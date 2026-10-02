@@ -11,6 +11,7 @@ const repartoSchema = z.object({
 
 export const inputSucesionSchema = z.object({
   regimen: z.enum(['comun', 'cataluna', 'navarra', 'pais_vasco', 'galicia', 'aragon', 'baleares']),
+  situacionConyugal: z.enum(['conyuge_vivo', 'viudo', 'soltero', 'separado_divorciado']).nullable().default(null),
   regimenEconomico: z.enum(['gananciales', 'separacion_bienes', 'soltero_viudo']),
   inmuebles: z.array(z.object({
     id,

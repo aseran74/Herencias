@@ -5,6 +5,7 @@ import { redactarBorrador } from './borrador'
 function entrada(extra: Partial<Input> = {}): Input {
   return {
     regimen: 'comun',
+    situacionConyugal: 'soltero',
     regimenEconomico: 'soltero_viudo',
     inmuebles: [{ id: 'casa', nombre: 'Vivienda', valorCent: 210_000_000, porcentajeCausanteBps: 10_000, cargasCent: 0 }],
     otrosActivos: [],

@@ -15,6 +15,7 @@ function hijo(id: string, vive = true, descendientes: Hijo['descendientes'] = []
 function inputBase(caudalCent = 2_100_000 * EUR): Input {
   return {
     regimen: 'comun',
+    situacionConyugal: 'soltero',
     regimenEconomico: 'separacion_bienes',
     inmuebles: [],
     otrosActivos: [{
@@ -192,6 +193,7 @@ describe('núcleo sucesorio', () => {
 
   it('T10 R10 pondera la participación del causante en gananciales', () => {
     const input = inputBase()
+    input.situacionConyugal = 'conyuge_vivo'
     input.regimenEconomico = 'gananciales'
     input.otrosActivos[0]!.porcentajeCausanteBps = 5_000
 
@@ -215,6 +217,7 @@ describe('núcleo sucesorio', () => {
   it('T12 R9 avisa del usufructo del cónyuge sin cambiar importes', () => {
     const input = inputBase()
     const sinConyuge = calcularSucesion(input)
+    input.situacionConyugal = 'conyuge_vivo'
     input.conyugeViudo = true
 
     const conConyuge = calcularSucesion(input)

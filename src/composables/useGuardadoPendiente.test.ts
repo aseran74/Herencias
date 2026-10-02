@@ -7,6 +7,7 @@ import type { Input } from '../domain/succession'
 
 const input: Input = {
   regimen: 'comun',
+  situacionConyugal: 'soltero',
   regimenEconomico: 'soltero_viudo',
   inmuebles: [],
   otrosActivos: [],

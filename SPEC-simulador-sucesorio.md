@@ -63,6 +63,11 @@ export type Regimen =
   | 'aragon'
   | 'baleares'
 export type RegimenEconomico = 'gananciales' | 'separacion_bienes' | 'soltero_viudo'
+export type SituacionConyugal =
+  | 'conyuge_vivo'
+  | 'viudo'
+  | 'soltero'
+  | 'separado_divorciado'
 export type ComunidadIsd =
   | 'andalucia' | 'aragon' | 'asturias' | 'baleares' | 'canarias' | 'cantabria'
   | 'castilla_la_mancha' | 'castilla_y_leon' | 'cataluna' | 'ceuta' | 'extremadura'
@@ -104,6 +109,7 @@ export interface Disposiciones {
 export interface Adjudicacion { inmuebleId: string; herederoId: string; bps: number }
 export interface Input {
   regimen: Regimen
+  situacionConyugal: SituacionConyugal | null
   regimenEconomico: RegimenEconomico
   inmuebles: Inmueble[]
   otrosActivos: OtroActivo[]
@@ -157,9 +163,9 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 
 ## 8. Wizard
 
-1. Régimen: vecindad civil, estado civil y régimen económico.
+1. Régimen: vecindad civil; situación conyugal explícita (cónyuge vivo, viudo, soltero o separado/divorciado); y régimen económico cuando hubo matrimonio.
 2. Patrimonio: inmuebles, participación, cargas, otros activos y deudas.
-3. Familia: hijos, premoriencia, descendientes y cónyuge viudo.
+3. Familia: hijos, premoriencia y descendientes. La situación del cónyuge ya se recoge en el paso 1.
 4. Cribado: flags sí/no.
 5. Legítima estricta: automática y visual.
 6. Mejora: porcentajes a descendientes, suma validada en vivo.

@@ -29,6 +29,5 @@ function nuevoNieto(indice: number) {
       </template>
     </article>
     <button type="button" class="secundario" data-testid="anadir-hijo" @click="nuevoHijo">+ Añadir hijo/a</button>
-    <label class="check campo-suelto"><input v-model="store.input.conyugeViudo" type="checkbox"> Hay cónyuge viudo no separado</label>
   </section>
 </template>

@@ -6,9 +6,9 @@ export interface Clausula {
 }
 
 const REGIMEN_ECONOMICO: Record<Input['regimenEconomico'], string> = {
-  gananciales: 'casado en régimen de gananciales',
-  separacion_bienes: 'casado en régimen de separación de bienes',
-  soltero_viudo: 'soltero o viudo',
+  gananciales: 'régimen de gananciales',
+  separacion_bienes: 'régimen de separación de bienes',
+  soltero_viudo: 'sin régimen económico matrimonial vigente',
 }
 
 const TIPO_ACTIVO: Record<Input['otrosActivos'][number]['tipo'], string> = {
@@ -37,6 +37,18 @@ function nombreDe(input: Input, resultado: Resultado, id: string): string {
     ?? input.hijos.find(hijo => hijo.id === id)?.nombre
     ?? input.hijos.flatMap(hijo => hijo.descendientes).find(nieto => nieto.id === id)?.nombre
     ?? 'la persona indicada'
+}
+
+function situacionPersonal(input: Input): string {
+  if (input.situacionConyugal === 'conyuge_vivo') {
+    return `casado y con su cónyuge vivo, en ${REGIMEN_ECONOMICO[input.regimenEconomico]}`
+  }
+  if (input.situacionConyugal === 'viudo') {
+    return `viudo, cuyo matrimonio se rigió por ${REGIMEN_ECONOMICO[input.regimenEconomico]}`
+  }
+  if (input.situacionConyugal === 'separado_divorciado') return 'divorciado o separado'
+  if (input.situacionConyugal === 'soltero') return 'soltero'
+  return REGIMEN_ECONOMICO[input.regimenEconomico]
 }
 
 function estirpes(input: Input): string[] {
@@ -104,7 +116,7 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
       titulo: 'Primera. Comparecencia',
       parrafos: [
         `En ______________, a ____ de ______________ de ________.`,
-        `Ante mí, notario, comparece ${quien}, mayor de edad, ${REGIMEN_ECONOMICO[input.regimenEconomico]}, con vecindad civil común. Manifiesta que otorga testamento abierto conforme al derecho común español.`,
+        `Ante mí, notario, comparece ${quien}, mayor de edad, ${situacionPersonal(input)}, con vecindad civil común. Manifiesta que otorga testamento abierto conforme al derecho común español.`,
       ],
     },
     {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { SituacionConyugal } from '../../domain/succession'
 import { useWizardStore } from '../../stores/wizard'
 
 const store = useWizardStore()
@@ -11,6 +12,14 @@ const regimenes = [
   ['aragon', 'Aragón'],
   ['baleares', 'Baleares'],
 ] as const
+
+function elegirSituacion(situacion: SituacionConyugal) {
+  store.input.situacionConyugal = situacion
+  store.input.conyugeViudo = situacion === 'conyuge_vivo'
+  if (situacion === 'soltero' || situacion === 'separado_divorciado') {
+    store.input.regimenEconomico = 'soltero_viudo'
+  }
+}
 </script>
 
 <template>
@@ -26,10 +35,52 @@ const regimenes = [
       </label>
     </fieldset>
     <fieldset class="opciones">
-      <legend>Situación y régimen económico</legend>
+      <legend>Situación conyugal del causante</legend>
+      <label class="opcion">
+        <input
+          :checked="store.input.situacionConyugal === 'conyuge_vivo'"
+          type="radio"
+          name="situacion-conyugal"
+          value="conyuge_vivo"
+          @change="elegirSituacion('conyuge_vivo')"
+        >
+        Casado/a: su cónyuge vive y no están separados
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.situacionConyugal === 'viudo'"
+          type="radio"
+          name="situacion-conyugal"
+          value="viudo"
+          @change="elegirSituacion('viudo')"
+        >
+        Viudo/a: su cónyuge ha fallecido
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.situacionConyugal === 'soltero'"
+          type="radio"
+          name="situacion-conyugal"
+          value="soltero"
+          @change="elegirSituacion('soltero')"
+        >
+        Soltero/a
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.situacionConyugal === 'separado_divorciado'"
+          type="radio"
+          name="situacion-conyugal"
+          value="separado_divorciado"
+          @change="elegirSituacion('separado_divorciado')"
+        >
+        Divorciado/a o separado/a
+      </label>
+    </fieldset>
+    <fieldset v-if="store.input.situacionConyugal === 'conyuge_vivo' || store.input.situacionConyugal === 'viudo'" class="opciones">
+      <legend>Régimen económico del matrimonio</legend>
       <label class="opcion"><input v-model="store.input.regimenEconomico" type="radio" value="gananciales"> Gananciales</label>
       <label class="opcion"><input v-model="store.input.regimenEconomico" type="radio" value="separacion_bienes"> Separación de bienes</label>
-      <label class="opcion"><input v-model="store.input.regimenEconomico" type="radio" value="soltero_viudo"> Soltero/a o viudo/a</label>
     </fieldset>
     <p v-if="store.input.regimen !== 'comun'" class="aviso" data-testid="aviso-foral">
       Este simulador no calcula derechos forales. Puedes continuar para solicitar revisión personalizada.

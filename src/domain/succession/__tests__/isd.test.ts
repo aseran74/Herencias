@@ -4,6 +4,7 @@ import { calcularSucesion, estimarIsd, cuotaIntegraEstatalCent, type Input } fro
 function entrada(comunidad: Input['comunidadIsd'], extra: Partial<Input> = {}): Input {
   return {
     regimen: 'comun',
+    situacionConyugal: 'soltero',
     regimenEconomico: 'separacion_bienes',
     inmuebles: [],
     otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 20_000_000, porcentajeCausanteBps: 10_000 }],

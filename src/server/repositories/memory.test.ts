@@ -4,6 +4,7 @@ import { InMemoryLeadRepository, InMemoryTenantRepository } from './memory'
 
 const input: Input = {
   regimen: 'comun',
+  situacionConyugal: 'soltero',
   regimenEconomico: 'soltero_viudo',
   inmuebles: [],
   otrosActivos: [{ id: 'c', tipo: 'cuenta', valorCent: 18_000_000, porcentajeCausanteBps: 10_000 }],

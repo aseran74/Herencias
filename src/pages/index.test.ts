@@ -17,6 +17,7 @@ describe('wizard', () => {
     const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
 
     expect(wrapper.text()).toContain('Derecho común')
+    await wrapper.get('input[value="soltero"]').setValue()
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     expect(wrapper.text()).toContain('Patrimonio que entra')
     await wrapper.get('[data-testid="anadir-inmueble"]').trigger('click')
@@ -41,12 +42,27 @@ describe('wizard', () => {
     expect(wrapper.text()).toContain('Resumen')
   })
 
+  it('pregunta si el cónyuge vive antes de avanzar', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
+
+    await wrapper.get('[data-testid="continuar"]').trigger('click')
+    expect(wrapper.text()).toContain('Indica la situación conyugal')
+    await wrapper.get('input[value="conyuge_vivo"]').setValue()
+    expect(wrapper.text()).toContain('Régimen económico del matrimonio')
+    await wrapper.get('input[value="gananciales"]').setValue()
+    await wrapper.get('[data-testid="continuar"]').trigger('click')
+    expect(wrapper.text()).toContain('Patrimonio que entra')
+  })
+
   it('envía un caso foral al resumen sin reparto', async () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
 
     await wrapper.get('input[value="cataluna"]').setValue()
+    await wrapper.get('input[value="soltero"]').setValue()
     expect(wrapper.get('[data-testid="aviso-foral"]').exists()).toBe(true)
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     expect(wrapper.get('[data-testid="resumen-bloqueante"]').exists()).toBe(true)
@@ -59,6 +75,7 @@ describe('wizard', () => {
     setActivePinia(pinia)
     const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
 
+    await wrapper.get('input[value="soltero"]').setValue()
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     await wrapper.get('[data-testid="anadir-inmueble"]').trigger('click')
     await wrapper.get('[data-testid="inmueble-nombre-0"]').setValue('Vivienda')
@@ -73,6 +90,7 @@ describe('wizard', () => {
     setActivePinia(pinia)
     const wrapper = mount(IndexPage, { global: { plugins: [pinia] } })
     await wrapper.get('input[value="navarra"]').setValue()
+    await wrapper.get('input[value="soltero"]').setValue()
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     const consentimiento = wrapper.get<HTMLInputElement>('[data-testid="consentimiento"]')
     expect(consentimiento.element.checked).toBe(false)
