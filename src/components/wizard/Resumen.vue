@@ -35,6 +35,7 @@ const albaceaLista = computed(() => {
 const etiquetasError: Record<string, string> = {
   CAUDAL_NO_POSITIVO: 'El caudal no es positivo.',
   SIN_HIJOS: 'No hay estirpes para repartir.',
+  SIN_HEREDEROS: 'Añade al menos un sobrino, nieto o familiar cercano.',
   MEJORA_BPS_NO_SUMA_100: 'La mejora no suma 100 %.',
   LIBRE_BPS_NO_SUMA_100: 'La libre disposición no suma 100 %.',
   MEJORA_SOLO_DESCENDIENTES: 'La mejora solo puede asignarse a descendientes.',
@@ -46,6 +47,7 @@ const etiquetasAviso: Record<string, string> = {
   CONYUGE_VIUDO_USUFRUCTO_MEJORA: 'El cónyuge viudo puede tener usufructo sobre el tercio de mejora.',
   REGIMEN_GANANCIALES: 'Solo se computa la participación del causante en los bienes gananciales.',
   DIFERENCIAS_ADJUDICACION: 'La adjudicación presenta diferencias que pueden requerir compensación.',
+  SIN_DESCENDIENTES_LIBRE_TOTAL: 'Sin descendientes, todo el caudal se trata como libre disposición. Si viven padres o abuelos, el notario revisará su legítima.',
 }
 const etiquetasMotivo: Record<string, string> = {
   REGIMEN_FORAL: 'La vecindad civil indicada tiene derecho foral.',
@@ -157,11 +159,15 @@ async function guardarSimulacion() {
         <strong>{{ centimosAEuros(store.resultado.parteConyugeGanancialCent) }}</strong>
       </div>
       <div><span>Caudal hereditario del causante</span><strong>{{ centimosAEuros(store.resultado.caudalCent) }}</strong></div>
-      <template v-if="store.resultado.tercios">
+      <template v-if="store.resultado.tercios && store.resultado.tercios.estrictaCent > 0">
         <div><span>Estricta</span><strong>{{ centimosAEuros(store.resultado.tercios.estrictaCent) }}</strong></div>
         <div><span>Mejora</span><strong>{{ centimosAEuros(store.resultado.tercios.mejoraCent) }}</strong></div>
         <div><span>Libre disposición</span><strong>{{ centimosAEuros(store.resultado.tercios.libreCent) }}</strong></div>
       </template>
+      <div v-else-if="store.resultado.tercios">
+        <span>Libre disposición · sin descendientes</span>
+        <strong>{{ centimosAEuros(store.resultado.tercios.libreCent) }}</strong>
+      </div>
     </div>
 
     <div v-if="store.resultado.estado === 'revision_obligatoria'" class="revision" data-testid="resumen-bloqueante">
@@ -174,7 +180,10 @@ async function guardarSimulacion() {
     <template v-else>
       <section class="libre-resumen" data-testid="resumen-libre">
         <h3>Libre disposición</h3>
-        <p v-if="store.input.disposiciones.libre === null" class="nota">
+        <p v-if="store.input.disposiciones.libre === null && store.sinDescendientes" class="nota">
+          Sin porcentajes propios: se reparte por igual entre las personas nombradas.
+        </p>
+        <p v-else-if="store.input.disposiciones.libre === null" class="nota">
           No se señaló destinatario: este tercio se reparte entre las estirpes.
         </p>
         <ul class="lista-limpia">
@@ -192,7 +201,7 @@ async function guardarSimulacion() {
           El tercio no cambia de importe.
         </p>
       </section>
-      <p class="leyenda-tercios">
+      <p class="leyenda-tercios" v-if="!store.sinDescendientes">
         <span><i class="muestra estricta" /> Estricta</span>
         <span><i class="muestra mejora" /> Mejora</span>
         <span><i class="muestra libre" /> Libre disposición</span>

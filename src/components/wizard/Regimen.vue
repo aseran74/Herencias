@@ -19,6 +19,18 @@ function elegirSituacion(situacion: SituacionConyugal) {
   if (situacion !== 'conyuge_vivo') {
     store.input.regimenEconomico = 'soltero_viudo'
   }
+  if (situacion !== 'soltero') {
+    store.input.tieneHijos = store.input.tieneHijos ?? (store.input.hijos.length > 0 ? true : null)
+  }
+}
+
+function elegirHijos(tiene: boolean) {
+  store.input.tieneHijos = tiene
+  if (tiene) return
+  store.input.hijos = []
+  store.input.atribucionEstricta = { tipo: null, inmuebleId: null }
+  store.input.disposiciones.mejora = null
+  store.input.flags.hijoConDiscapacidad = false
 }
 </script>
 
@@ -75,6 +87,68 @@ function elegirSituacion(situacion: SituacionConyugal) {
           @change="elegirSituacion('separado_divorciado')"
         >
         Divorciado/a o separado/a
+      </label>
+    </fieldset>
+    <fieldset v-if="store.input.situacionConyugal === 'soltero'" class="opciones" data-testid="preguntas-soltero">
+      <legend>¿El causante tiene hijos?</legend>
+      <label class="opcion">
+        <input
+          :checked="store.input.tieneHijos === true"
+          data-testid="tiene-hijos-si"
+          type="radio"
+          name="tiene-hijos"
+          @change="elegirHijos(true)"
+        >
+        Sí: hay hijos o nietos que le representan
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.tieneHijos === false"
+          data-testid="tiene-hijos-no"
+          type="radio"
+          name="tiene-hijos"
+          @change="elegirHijos(false)"
+        >
+        No tiene descendientes
+      </label>
+    </fieldset>
+    <fieldset v-if="store.input.situacionConyugal === 'soltero' && store.input.tieneHijos !== null" class="opciones">
+      <legend>
+        {{ store.input.tieneHijos
+          ? 'Además, ¿quieres dejar la libre disposición a alguna de estas personas?'
+          : '¿A quién quieres dejar todo el patrimonio?' }}
+      </legend>
+      <p class="nota">
+        {{ store.input.tieneHijos
+          ? 'Los hijos conservan su legítima. Aquí solo indicas si parte libre va a sobrinos, nietos u otro familiar.'
+          : 'Sin hijos, el caudal se trata como libre disposición. Puedes dejarlo a los tres sobrinos, a nietos o a un familiar cercano. Si viven los padres, el notario revisará su legítima.' }}
+      </p>
+      <label class="opcion">
+        <input
+          :checked="store.input.destinosColaterales.sobrinos"
+          data-testid="destino-sobrinos"
+          type="checkbox"
+          @change="store.input.destinosColaterales.sobrinos = ($event.target as HTMLInputElement).checked"
+        >
+        Sobrinos
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.destinosColaterales.nietos"
+          data-testid="destino-nietos"
+          type="checkbox"
+          @change="store.input.destinosColaterales.nietos = ($event.target as HTMLInputElement).checked"
+        >
+        Nietos
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.destinosColaterales.familiarCercano"
+          data-testid="destino-familiar"
+          type="checkbox"
+          @change="store.input.destinosColaterales.familiarCercano = ($event.target as HTMLInputElement).checked"
+        >
+        Familiar cercano
       </label>
     </fieldset>
     <fieldset v-if="store.input.situacionConyugal === 'conyuge_vivo'" class="opciones">

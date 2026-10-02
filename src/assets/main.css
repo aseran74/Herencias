@@ -317,6 +317,8 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .cifra-destacada strong { display: block; font-family: Fraunces, serif; font-size: 2rem; }
 .atribucion-estricta { margin-top: 1.4rem; }
 .lista-limpia { margin: 0; padding: 0; list-style: none; }
+.colaterales { display: grid; gap: .9rem; margin-top: 1.4rem; }
+.colaterales h3 { margin: .4rem 0 0; }
 .lista-limpia li { padding: .65rem 0; border-bottom: 1px solid var(--linea); }
 .porcentajes { display: grid; gap: .9rem; margin-top: 1rem; }
 .porcentajes label { display: grid; gap: .35rem; }

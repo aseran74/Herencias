@@ -14,7 +14,7 @@ import type {
   Resultado,
   Tercios,
 } from './types'
-import { validarInput } from './validate'
+import { hayEstirpes, validarInput } from './validate'
 
 function datosMonetariosValidos(input: Input): boolean {
   const valores = [
@@ -207,19 +207,28 @@ export function calcularSucesion(input: Input): Resultado {
     )
   }
 
-  const tercios = calcularTercios(caudalCent)
+  const tercios = hayEstirpes(input)
+    ? calcularTercios(caudalCent)
+    : { estrictaCent: 0, mejoraCent: 0, libreCent: caudalCent }
   const errores = validarInput(input)
   if (errores.length > 0) {
     return resultadoSinReparto('error', caudalCent, [], errores, tercios, parteConyugeGanancialCent)
   }
 
   const ramas = estirpes(input)
-  const estricta = repartirPorEstirpes(tercios.estrictaCent, ramas)
+  const estricta = ramas.length
+    ? repartirPorEstirpes(tercios.estrictaCent, ramas)
+    : new Map<string, number>()
   const mejora = input.disposiciones.mejora === null
-    ? repartirPorEstirpes(tercios.mejoraCent, ramas)
+    ? (ramas.length ? repartirPorEstirpes(tercios.mejoraCent, ramas) : new Map<string, number>())
     : repartirPorBps(tercios.mejoraCent, input.disposiciones.mejora)
   const libre = input.disposiciones.libre === null
-    ? repartirPorEstirpes(tercios.libreCent, ramas)
+    ? (ramas.length
+        ? repartirPorEstirpes(tercios.libreCent, ramas)
+        : repartirIgual(
+            tercios.libreCent,
+            input.beneficiariosLibre.filter(persona => persona.nombre.trim()).map(persona => persona.id),
+          ))
     : repartirPorBps(tercios.libreCent, input.disposiciones.libre)
   const nombres = mapaNombres(input)
   const porHeredero = crearDesglose(estricta, mejora, libre, nombres)

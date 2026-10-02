@@ -78,11 +78,24 @@ export interface Reparto {
   bps: number
 }
 
+export type RolColateral = 'sobrino' | 'nieto' | 'familiar_cercano'
+
+export interface DestinosColaterales {
+  sobrinos: boolean
+  nietos: boolean
+  familiarCercano: boolean
+}
+
+export function destinosColateralesIniciales(): DestinosColaterales {
+  return { sobrinos: false, nietos: false, familiarCercano: false }
+}
+
 export interface BeneficiarioLibre {
   id: string
   nombre: string
   tipo: 'persona' | 'entidad'
   parentesco?: 'descendiente' | 'cercano' | 'ajeno'
+  rol?: RolColateral
 }
 
 export interface Disposiciones {
@@ -117,6 +130,8 @@ export interface Input {
   deudasCent: number
   donaciones: Donacion[]
   hijos: Hijo[]
+  tieneHijos: boolean | null
+  destinosColaterales: DestinosColaterales
   beneficiariosLibre: BeneficiarioLibre[]
   conyugeViudo: boolean
   disposiciones: Disposiciones
@@ -139,6 +154,7 @@ export interface Input {
 export type CodigoError =
   | 'CAUDAL_NO_POSITIVO'
   | 'SIN_HIJOS'
+  | 'SIN_HEREDEROS'
   | 'MEJORA_BPS_NO_SUMA_100'
   | 'LIBRE_BPS_NO_SUMA_100'
   | 'MEJORA_SOLO_DESCENDIENTES'
@@ -150,6 +166,7 @@ export type CodigoAviso =
   | 'CONYUGE_VIUDO_USUFRUCTO_MEJORA'
   | 'REGIMEN_GANANCIALES'
   | 'DIFERENCIAS_ADJUDICACION'
+  | 'SIN_DESCENDIENTES_LIBRE_TOTAL'
 
 export type MotivoRevision =
   | 'REGIMEN_FORAL'

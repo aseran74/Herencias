@@ -23,6 +23,13 @@ function fijarPorcentaje(reparto: { bps: number }, valor: string) {
 <template>
   <section aria-labelledby="titulo-mejora">
     <p class="kicker">06 · Tercio de mejora</p>
+    <template v-if="store.sinDescendientes">
+      <h2 id="titulo-mejora">No hay tercio de mejora</h2>
+      <p class="lede" data-testid="mejora-no-aplica">
+        La mejora solo existe cuando hay descendientes. Aquí el caudal entero se reparte como libre disposición.
+      </p>
+    </template>
+    <template v-else>
     <h2 id="titulo-mejora">Mejorar a uno o varios descendientes</h2>
     <label class="interruptor"><input v-model="personalizada" type="checkbox"> Quiero decidir el reparto de la mejora</label>
     <p v-if="!personalizada" class="nota">Sin disposición: se reparte por estirpes.</p>
@@ -45,5 +52,6 @@ function fijarPorcentaje(reparto: { bps: number }, valor: string) {
       </label>
       <p :class="{ alerta: suma !== 10000 }" aria-live="polite">Total: {{ porcentaje(suma) }} %</p>
     </div>
+    </template>
   </section>
 </template>

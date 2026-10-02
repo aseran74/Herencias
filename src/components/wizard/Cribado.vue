@@ -1,14 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useWizardStore } from '../../stores/wizard'
+
 const store = useWizardStore()
-const preguntas = [
-  ['testamentoAnterior', '¿Existe un testamento anterior?'],
-  ['hijoConDiscapacidad', '¿Hay descendientes con discapacidad?'],
-  ['desheredacion', '¿Se plantea una desheredación?'],
-  ['empresaFamiliar', '¿Hay una empresa familiar?'],
-  ['bienesExtranjero', '¿Hay bienes en el extranjero?'],
-  ['pactoSucesorio', '¿Existe un pacto sucesorio?'],
-] as const
+const preguntas = computed(() => {
+  const todas = [
+    ['testamentoAnterior', '¿Existe un testamento anterior?'],
+    ['hijoConDiscapacidad', '¿Hay descendientes con discapacidad?'],
+    ['desheredacion', '¿Se plantea una desheredación?'],
+    ['empresaFamiliar', '¿Hay una empresa familiar?'],
+    ['bienesExtranjero', '¿Hay bienes en el extranjero?'],
+    ['pactoSucesorio', '¿Existe un pacto sucesorio?'],
+  ] as const
+  return store.sinDescendientes
+    ? todas.filter(([clave]) => clave !== 'hijoConDiscapacidad')
+    : todas
+})
 </script>
 
 <template>

@@ -73,7 +73,7 @@ async function subirGrabacion(archivo: { filename?: string; type?: string; data:
   const cliente = createAdminClient({ baseUrl: url, apiKey })
   const { data, error } = await cliente.storage.from(CUBO_GRABACIONES).upload(
     clave,
-    new Blob([archivo.data], { type: archivo.type || 'video/webm' }),
+    new Blob([Uint8Array.from(archivo.data)], { type: archivo.type || 'video/webm' }),
   )
   if (error || !data) throw createError({ statusCode: 500, statusMessage: 'No se pudo guardar la grabación' })
   return { url: data.url as string, key: data.key as string }

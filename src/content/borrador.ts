@@ -61,6 +61,15 @@ function estirpes(input: Input): string[] {
   })
 }
 
+function calidadColateral(persona: Input['beneficiariosLibre'][number]): string {
+  if (persona.rol === 'sobrino') return 'sobrino'
+  if (persona.rol === 'nieto') return 'nieto'
+  if (persona.rol === 'familiar_cercano') return 'familiar cercano'
+  if (persona.parentesco === 'cercano') return 'familiar cercano'
+  if (persona.parentesco === 'descendiente') return 'descendiente'
+  return persona.tipo === 'entidad' ? 'entidad' : 'persona'
+}
+
 export function redactarBorrador(input: Input, resultado: Resultado, otorgante = ''): Clausula[] | null {
   if ((resultado.estado !== 'ok' && resultado.estado !== 'ok_con_avisos') || !resultado.tercios || resultado.caudalCent === null) {
     return null
@@ -91,14 +100,17 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
       .filter(reparto => reparto.bps > 0)
       .map(reparto => `${nombreDe(input, resultado, reparto.herederoId)} recibe el ${porcentaje(reparto.bps)} del tercio de mejora.`)
 
+  const libreSinDescendientes = resultado.tercios.estrictaCent === 0
   const libre = input.disposiciones.libre === null
-    ? ['El tercio de libre disposición no se asignó a otra persona, así que se reparte por igual entre las estirpes.']
+    ? [libreSinDescendientes
+        ? 'La herencia se reparte por igual entre las personas instituidas herederas.'
+        : 'El tercio de libre disposición no se asignó a otra persona, así que se reparte por igual entre las estirpes.']
     : input.disposiciones.libre
       .filter(reparto => reparto.bps > 0)
       .map((reparto) => {
         const beneficiario = input.beneficiariosLibre.find(persona => persona.id === reparto.herederoId)
         const calidad = beneficiario?.tipo === 'entidad' ? 'La entidad' : 'La persona'
-        return `${calidad} ${nombreDe(input, resultado, reparto.herederoId)} recibe el ${porcentaje(reparto.bps)} del tercio de libre disposición.`
+        return `${calidad} ${nombreDe(input, resultado, reparto.herederoId)} recibe el ${porcentaje(reparto.bps)} ${libreSinDescendientes ? 'del caudal' : 'del tercio de libre disposición'}.`
       })
 
   const estrictaTexto = ['La legítima estricta es un tercio del caudal y se atribuye por partes iguales entre las estirpes.']
@@ -138,23 +150,37 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
     },
     {
       titulo: 'Tercera. Institución de herederos',
-      parrafos: [
-        'Instituye herederos a sus descendientes por estirpes:',
-        ...estirpes(input),
-        ...herederos,
-      ],
+      parrafos: libreSinDescendientes
+        ? [
+            'Manifiesta que no tiene descendientes. Instituye herederos, por partes iguales salvo otra disposición, a:',
+            ...input.beneficiariosLibre.filter(persona => persona.nombre.trim()).map(persona =>
+              `${persona.nombre}, ${calidadColateral(persona)}.`),
+            ...herederos,
+            'Si al otorgar existieran ascendientes legitimarios, el notario reservará su legítima legal.',
+          ]
+        : [
+            'Instituye herederos a sus descendientes por estirpes:',
+            ...estirpes(input),
+            ...herederos,
+          ],
     },
     {
       titulo: 'Cuarta. Legítima estricta',
-      parrafos: estrictaTexto,
+      parrafos: libreSinDescendientes
+        ? ['No reserva tercio de estricta porque no hay descendientes. El notario comprobará si existen ascendientes legitimarios.']
+        : estrictaTexto,
     },
     {
       titulo: 'Quinta. Mejora',
-      parrafos: ['La mejora es un tercio del caudal.', ...mejora],
+      parrafos: libreSinDescendientes
+        ? ['No hay tercio de mejora al no existir descendientes.']
+        : ['La mejora es un tercio del caudal.', ...mejora],
     },
     {
       titulo: 'Sexta. Libre disposición',
-      parrafos: ['La libre disposición es un tercio del caudal.', ...libre],
+      parrafos: libreSinDescendientes
+        ? ['Todo el caudal se atribuye por libre disposición.', ...libre]
+        : ['La libre disposición es un tercio del caudal.', ...libre],
     },
   ]
 

@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { facultadesIniciales } from '../content/albacea'
-import { calcularSucesion, detectarCasosBloqueantes, type Input } from '../domain/succession'
+import { calcularSucesion, detectarCasosBloqueantes, destinosColateralesIniciales, hayEstirpes, type Input } from '../domain/succession'
 
 export const PASOS = [
   'Régimen', 'Patrimonio', 'Familia', 'Cribado', 'Estricta',
@@ -17,6 +17,8 @@ const inputInicial = (): Input => ({
   deudasCent: 0,
   donaciones: [],
   hijos: [],
+  tieneHijos: null,
+  destinosColaterales: destinosColateralesIniciales(),
   beneficiariosLibre: [],
   conyugeViudo: false,
   disposiciones: { mejora: null, libre: null },
@@ -49,6 +51,8 @@ export const useWizardStore = defineStore('succession-wizard', () => {
       : hijo.descendientes.map(nieto => ({ id: nieto.id, nombre: nieto.nombre })),
   ).filter(persona => persona.nombre.trim()))
 
+  const sinDescendientes = computed(() => !hayEstirpes(input.value))
+
   const beneficiarios = computed(() => {
     const mapa = new Map<string, string>()
     for (const persona of descendientes.value) mapa.set(persona.id, persona.nombre)
@@ -62,6 +66,17 @@ export const useWizardStore = defineStore('succession-wizard', () => {
       if (input.value.situacionConyugal === 'conyuge_vivo' && input.value.regimenEconomico === 'soltero_viudo') {
         return ['Indica el régimen económico del matrimonio.']
       }
+      if (input.value.situacionConyugal === 'soltero') {
+        if (input.value.tieneHijos === null) return ['Indica si el causante tiene hijos.']
+        if (
+          input.value.tieneHijos === false
+          && !input.value.destinosColaterales.sobrinos
+          && !input.value.destinosColaterales.nietos
+          && !input.value.destinosColaterales.familiarCercano
+        ) {
+          return ['Indica si quieres dejar el patrimonio a sobrinos, nietos o un familiar cercano.']
+        }
+      }
       return []
     }
     if (numero === 2) {
@@ -73,6 +88,11 @@ export const useWizardStore = defineStore('succession-wizard', () => {
       return hayActivo ? [] : ['Añade al menos un activo con un valor superior a 0 €.']
     }
     if (numero === 3) {
+      if (input.value.situacionConyugal === 'soltero' && input.value.tieneHijos === false) {
+        return input.value.beneficiariosLibre.some(persona => persona.nombre.trim())
+          ? []
+          : ['Añade al menos un sobrino, nieto o familiar cercano.']
+      }
       return descendientes.value.length ? [] : ['Añade un hijo vivo o nietos de un hijo premuerto.']
     }
     if (numero === 5) {
@@ -138,13 +158,22 @@ export const useWizardStore = defineStore('succession-wizard', () => {
   function cargar(nuevoInput: Input, nuevoPaso: number = PASOS.length) {
     // Los objetos guardados dentro de un ref pasan a ser Proxy de Vue.
     // Una copia JSON elimina el Proxy y conserva íntegro este contrato de datos.
-    input.value = JSON.parse(JSON.stringify(nuevoInput)) as Input
+    const copia = JSON.parse(JSON.stringify(nuevoInput)) as Input
+    input.value = {
+      ...inputInicial(),
+      ...copia,
+      facultadesAlbacea: { ...facultadesIniciales(), ...copia.facultadesAlbacea },
+      destinosColaterales: { ...destinosColateralesIniciales(), ...copia.destinosColaterales },
+      atribucionEstricta: copia.atribucionEstricta ?? { tipo: null, inmuebleId: null },
+      flags: { ...inputInicial().flags, ...copia.flags },
+      tieneHijos: copia.tieneHijos ?? (hayEstirpes(copia) ? true : copia.situacionConyugal === 'soltero' ? null : true),
+    }
     paso.value = Math.min(PASOS.length, Math.max(1, nuevoPaso))
     erroresUi.value = []
   }
 
   return {
-    paso, input, resultado, bloqueado, descendientes, beneficiarios,
+    paso, input, resultado, bloqueado, descendientes, sinDescendientes, beneficiarios,
     erroresUi, pasoValido, validarPaso, avanzar, retroceder, irA, reiniciar, cargar,
   }
 })

@@ -1,6 +1,10 @@
 import { BPS_TOTAL } from './money'
 import type { CodigoError, Input } from './types'
 
+export function hayEstirpes(input: Input): boolean {
+  return input.hijos.some(hijo => hijo.vive || hijo.descendientes.length > 0)
+}
+
 export function idsDescendientesVivos(input: Input): Set<string> {
   const ids = new Set<string>()
 
@@ -23,10 +27,8 @@ export function validarInput(input: Input): CodigoError[] {
     ...beneficiariosLibres,
   ])
 
-  if (!input.hijos.some(hijo =>
-    hijo.vive || hijo.descendientes.length > 0,
-  )) {
-    errores.add('SIN_HIJOS')
+  if (!hayEstirpes(input) && !input.beneficiariosLibre.some(persona => persona.nombre.trim())) {
+    errores.add(input.tieneHijos === false ? 'SIN_HEREDEROS' : 'SIN_HIJOS')
   }
 
   if (input.disposiciones.mejora !== null) {

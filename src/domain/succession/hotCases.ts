@@ -3,6 +3,7 @@ import type {
   Input,
   MotivoRevision,
 } from './types'
+import { hayEstirpes } from './validate'
 
 export function detectarCasosBloqueantes(input: Input): MotivoRevision[] {
   const motivos: MotivoRevision[] = []
@@ -30,6 +31,9 @@ export function detectarAvisos(input: Input): CodigoAviso[] {
   }
   if (input.regimenEconomico === 'gananciales') {
     avisos.push('REGIMEN_GANANCIALES')
+  }
+  if (!hayEstirpes(input) && input.beneficiariosLibre.some(persona => persona.nombre.trim())) {
+    avisos.push('SIN_DESCENDIENTES_LIBRE_TOTAL')
   }
 
   return avisos

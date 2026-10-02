@@ -16,6 +16,8 @@ function entrada(extra: Partial<Input> = {}): Input {
       { id: 'bruno', nombre: 'Bruno', vive: true, descendientes: [] },
       { id: 'clara', nombre: 'Clara', vive: true, descendientes: [] },
     ],
+    tieneHijos: true,
+    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -54,6 +56,27 @@ describe('borrador notarial', () => {
     expect(texto).toContain('cuentas del causante')
     expect(texto).toContain('Vivienda')
     expect(texto).toContain('herederos legitimarios')
+  })
+
+  it('instituye a tres sobrinos cuando no hay descendientes', () => {
+    const input = entrada({
+      tieneHijos: false,
+      hijos: [],
+      destinosColaterales: { sobrinos: true, nietos: false, familiarCercano: false },
+      beneficiariosLibre: [
+        { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+        { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+        { id: 's3', nombre: 'Elena', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+      ],
+      atribucionEstricta: { tipo: null, inmuebleId: null },
+    })
+    const texto = redactarBorrador(input, calcularSucesion(input), 'Pedro Gil')?.flatMap(clausula => clausula.parrafos).join(' ')
+    expect(texto).toContain('no tiene descendientes')
+    expect(texto).toContain('Luis')
+    expect(texto).toContain('Marta')
+    expect(texto).toContain('Elena')
+    expect(texto).toContain('libre disposición')
+    expect(texto).not.toContain('herederos legitimarios')
   })
 
   it('no redacta un caso que exige revisión', () => {

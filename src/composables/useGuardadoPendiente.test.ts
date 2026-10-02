@@ -14,6 +14,8 @@ const input: Input = {
   deudasCent: 0,
   donaciones: [],
   hijos: [],
+  tieneHijos: null,
+  destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false },
   beneficiariosLibre: [],
   conyugeViudo: false,
   disposiciones: { mejora: null, libre: null },

@@ -46,9 +46,13 @@ function anadir() {
 <template>
   <section aria-labelledby="titulo-libre">
     <p class="kicker">07 · Libre disposición</p>
-    <h2 id="titulo-libre">El tercio de libre disposición</h2>
-    <label class="interruptor"><input v-model="personalizada" type="checkbox"> Quiero elegir destinatarios</label>
-    <p v-if="!personalizada" class="nota">Sin disposición: se reparte por estirpes.</p>
+    <h2 id="titulo-libre">{{ store.sinDescendientes ? 'Todo el patrimonio es de libre disposición' : 'El tercio de libre disposición' }}</h2>
+    <label class="interruptor"><input v-model="personalizada" type="checkbox"> Quiero elegir destinatarios o porcentajes</label>
+    <p v-if="!personalizada" class="nota">
+      {{ store.sinDescendientes
+        ? 'Sin porcentajes propios: se reparte por igual entre las personas que hayas nombrado. Si son tres sobrinos, cada uno recibe un tercio.'
+        : 'Sin disposición: se reparte por estirpes.' }}
+    </p>
     <template v-else>
       <div class="catalogo">
         <label>Nombre<input v-model="nombre" data-testid="libre-nombre" placeholder="Persona o entidad"></label>

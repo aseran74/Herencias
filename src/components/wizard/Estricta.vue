@@ -26,6 +26,13 @@ watch(
 <template>
   <section aria-labelledby="titulo-estricta">
     <p class="kicker">05 · Legítima estricta</p>
+    <template v-if="store.sinDescendientes">
+      <h2 id="titulo-estricta">No hay tercio de estricta</h2>
+      <p class="lede" data-testid="estricta-no-aplica">
+        Al no haber hijos ni estirpes, no se reserva un tercio de estricta. Todo el caudal es de libre disposición entre las personas que hayas nombrado. Si viven los padres o abuelos, el notario revisará su legítima.
+      </p>
+    </template>
+    <template v-else>
     <h2 id="titulo-estricta">El tercio reservado</h2>
     <p class="lede">Se reparte automáticamente por igual entre las estirpes. Aquí puedes, además, dejarles un inmueble concreto o su alquiler.</p>
     <div class="cifra-destacada">
@@ -69,5 +76,6 @@ watch(
     <p v-if="inmuebleElegido && store.input.atribucionEstricta.tipo === 'alquiler'" class="nota">
       Las rentas de {{ inmuebleElegido.nombre }} corresponderían a {{ legitimarios.map(p => p.nombre).join(', ') || 'las estirpes' }}, por igual. El inmueble en sí sigue en el caudal, salvo que más adelante lo adjudiques.
     </p>
+    </template>
   </section>
 </template>

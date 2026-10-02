@@ -28,6 +28,8 @@ function inputBase(caudalCent = 2_100_000 * EUR): Input {
     deudasCent: 0,
     donaciones: [],
     hijos: [hijo('a'), hijo('b'), hijo('c')],
+    tieneHijos: true,
+    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -371,5 +373,29 @@ describe('núcleo sucesorio', () => {
     expect(resultado.caudalCent).toBe(400_000)
     expect(adjudicacionA?.adjudicadoCent).toBe(100_000)
     expect(resultado.patrimonioPendienteAdjudicarCent).toBe(300_000)
+  })
+
+  it('reparte todo el caudal entre tres sobrinos si el soltero no tiene hijos', () => {
+    const input = inputBase()
+    input.tieneHijos = false
+    input.hijos = []
+    input.destinosColaterales = { sobrinos: true, nietos: false, familiarCercano: false }
+    input.beneficiariosLibre = [
+      { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+      { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+      { id: 's3', nombre: 'Elena', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
+    ]
+
+    const { resultado, herederos } = porId(input)
+
+    expect(resultado.tercios).toEqual({
+      estrictaCent: 0,
+      mejoraCent: 0,
+      libreCent: 2_100_000 * EUR,
+    })
+    expect(herederos.get('s1')?.totalCent).toBe(70_000_000)
+    expect(herederos.get('s2')?.totalCent).toBe(70_000_000)
+    expect(herederos.get('s3')?.totalCent).toBe(70_000_000)
+    expect(resultado.avisos).toContain('SIN_DESCENDIENTES_LIBRE_TOTAL')
   })
 })
