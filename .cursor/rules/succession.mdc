@@ -1,0 +1,16 @@
+---
+description: Reglas del dominio sucesorio español
+globs: src/domain/succession/**/*.ts
+alwaysApply: false
+---
+
+# Dominio sucesorio
+
+- `SPEC-simulador-sucesorio.md` es la fuente de verdad.
+- La carpeta `src/domain/succession` es TypeScript puro: no importar Vue, Pinia ni UI.
+- Todo dinero es entero en céntimos. Todo porcentaje usa puntos básicos (`10000 = 100 %`).
+- Las reglas de negocio devuelven errores tipados; no lanzan excepciones.
+- Cada regla R1-R12 debe tener al menos un test cuyo nombre incluya su ID.
+- Actualiza el spec antes de cambiar una regla jurídica.
+- No implementes derecho foral: los regímenes no comunes devuelven revisión obligatoria.
+- Los textos legales visibles viven en `src/content/legal.ts`.

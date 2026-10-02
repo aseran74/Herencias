@@ -1,0 +1,31 @@
+{
+  "name": "herencia",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "test": "vitest run",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "^5.2.8",
+    "@fontsource/fraunces": "^5.2.9",
+    "@insforge/sdk": "^1.5.2",
+    "@pinia/nuxt": "0.11.2",
+    "nuxt": "3.21.11",
+    "ofetch": "^1.4.1",
+    "pinia": "^3.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.4.6",
+    "fast-check": "^4.10.2",
+    "happy-dom": "^20.0.10",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.3.12"
+  }
+}
