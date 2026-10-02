@@ -10,8 +10,8 @@ export const TENANT_DEMO_ID = 'despacho-demo'
  */
 export function createRepositories(): { leads: LeadRepository; tenants: TenantRepository } {
   const config = useRuntimeConfig()
-  const url = config.insforgeUrl
-  const apiKey = config.insforgeApiKey
+  const url = String(config.insforgeUrl || '')
+  const apiKey = String(config.insforgeApiKey || '')
   if (url && apiKey) return createInsforgeRepositories(url, apiKey)
   return {
     leads: new InMemoryLeadRepository(),

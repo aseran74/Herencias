@@ -74,6 +74,7 @@ export interface BeneficiarioLibre {
   id: string
   nombre: string
   tipo: 'persona' | 'entidad'
+  parentesco?: 'descendiente' | 'cercano' | 'ajeno'
 }
 
 export interface Disposiciones {

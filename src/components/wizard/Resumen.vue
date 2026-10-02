@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { centimosAEuros } from '../../composables/useSuccession'
+import { guardarPendiente } from '../../composables/useGuardadoPendiente'
+import { useSimulaciones } from '../../composables/useSimulaciones'
 import { TEXTOS_LEGALES } from '../../content/legal'
 import { redactarBorrador } from '../../content/borrador'
 import { COMUNIDADES_ISD, estimarIsd } from '../../domain/succession'
+import { useAuthStore } from '../../stores/auth'
 import { useWizardStore } from '../../stores/wizard'
 const store = useWizardStore()
+const auth = useAuthStore()
 const contacto = ref({ nombre: '', email: '', telefono: '', consentimiento_rgpd: false })
+const tituloSimulacion = ref('Herencia familiar')
+const guardando = ref(false)
+const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
 const estadoEnvio = ref<'reposo' | 'exito' | 'error'>('reposo')
 const maximo = computed(() => Math.max(1, ...store.resultado.porHeredero.map(p => p.totalCent)))
@@ -17,7 +24,7 @@ const estimacion = computed(() => estimarIsd(store.input, store.resultado))
 const borrador = computed(() => redactarBorrador(store.input, store.resultado, contacto.value.nombre))
 const albaceaLista = computed(() => {
   if (store.input.quiereAlbacea === null) return false
-  return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length >= 2
+  return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length > 0
 })
 const etiquetasError: Record<string, string> = {
   CAUDAL_NO_POSITIVO: 'El caudal no es positivo.',
@@ -67,11 +74,31 @@ async function enviar() {
     enviando.value = false
   }
 }
+
+async function guardarSimulacion() {
+  const titulo = tituloSimulacion.value.trim()
+  if (titulo.length < 2) return
+  estadoGuardado.value = 'reposo'
+  if (!auth.user) {
+    guardarPendiente({ titulo, input: store.input, paso: store.paso })
+    await navigateTo('/acceso?siguiente=/perfil?guardar=pendiente')
+    return
+  }
+  guardando.value = true
+  try {
+    await useSimulaciones().guardar(auth.user.id, titulo, store.input, store.paso)
+    estadoGuardado.value = 'exito'
+  } catch {
+    estadoGuardado.value = 'error'
+  } finally {
+    guardando.value = false
+  }
+}
 </script>
 
 <template>
   <section aria-labelledby="titulo-resumen">
-    <p class="kicker">10 · Resumen</p>
+    <p class="kicker">11 · Resumen</p>
     <h2 id="titulo-resumen">{{ store.resultado.estado === 'revision_obligatoria' ? 'Tu caso requiere revisión' : 'Resultado orientativo' }}</h2>
 
     <div v-if="store.resultado.caudalCent !== null" class="magnitudes">
@@ -179,6 +206,25 @@ async function enviar() {
       </section>
       <button type="button" class="secundario no-imprimir" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
     </article>
+
+    <section class="guardar-simulacion" aria-labelledby="titulo-guardar">
+      <div>
+        <p class="kicker">Tu perfil</p>
+        <h3 id="titulo-guardar">Guarda esta posible herencia</h3>
+        <p>Conserva una copia privada para retomarla o compararla con otro escenario.</p>
+      </div>
+      <form @submit.prevent="guardarSimulacion">
+        <label>
+          Nombre de la simulación
+          <input v-model="tituloSimulacion" required minlength="2" maxlength="100">
+        </label>
+        <button type="submit" :disabled="guardando">
+          {{ guardando ? 'Guardando…' : auth.autenticado ? 'Guardar en mi perfil' : 'Acceder y guardar' }}
+        </button>
+      </form>
+      <p v-if="estadoGuardado === 'exito'" class="exito" role="status">Simulación guardada en tu perfil.</p>
+      <p v-if="estadoGuardado === 'error'" class="alerta" role="alert">No se pudo guardar. Inténtalo de nuevo.</p>
+    </section>
 
     <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar">
       <h3>{{ store.resultado.estado === 'revision_obligatoria' ? 'Solicita una revisión' : 'Revisa el resultado con el despacho' }}</h3>

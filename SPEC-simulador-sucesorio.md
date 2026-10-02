@@ -95,6 +95,7 @@ export interface BeneficiarioLibre {
   id: string
   nombre: string
   tipo: 'persona' | 'entidad'
+  parentesco?: 'descendiente' | 'cercano' | 'ajeno'
 }
 export interface Disposiciones {
   mejora: Reparto[] | null
@@ -165,7 +166,8 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 7. Libre: personas o entidades.
 8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias.
 9. Impuesto: comunidad de residencia habitual del causante y coste orientativo por heredero.
-10. Resumen: barras, impuesto, albacea (sí/no y nombre), borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura.
+10. Albacea: sí o no; si es sí, un descendiente u otra persona.
+11. Resumen: barras, impuesto, borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura.
 
 ## 9. Leads e InsForge
 
@@ -176,7 +178,17 @@ Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, conse
 - El navegador envía a `POST /api/leads`; Nitro valida, recalcula y persiste con credencial administrativa.
 - RLS bloquea acceso directo público a `leads`; la lectura queda reservada al despacho.
 
-## 10. Casos de prueba
+## 10. Perfil y simulaciones guardadas
+
+- El simulador sigue siendo público; la cuenta solo es obligatoria para guardar y recuperar escenarios.
+- Acceso mediante correo y contraseña con verificación por código, o mediante Google OAuth.
+- El perfil muestra nombre, correo y avatar cuando el proveedor lo aporta, y permite cerrar sesión.
+- El usuario guarda copias manuales con un título; puede abrirlas, renombrarlas y eliminarlas.
+- Tabla `simulaciones_guardadas(id, user_id, titulo, input_json, paso, version, created_at, updated_at)`.
+- `user_id` referencia `auth.users(id)`. RLS limita todas las operaciones a `auth.uid() = user_id`; no hay acceso anónimo.
+- Si el usuario inicia sesión desde el resumen, la simulación pendiente solo se conserva temporalmente en `sessionStorage` durante la redirección.
+
+## 11. Casos de prueba
 
 - **T1:** 3 hijos, caudal 2.100.000 €, sin disposiciones: tercios 700.000 €; cada capa se reparte 233.333,34 + 233.333,33 + 233.333,33.
 - **T2:** caudal 100 céntimos: tercios 33, 33 y 34.

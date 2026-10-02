@@ -18,17 +18,17 @@ const TIPO_ACTIVO: Record<Input['otrosActivos'][number]['tipo'], string> = {
   otro: 'otro bien',
 }
 
-function euros(centimos: number): string {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  }).format(centimos / 100)
-}
-
 function porcentaje(bps: number): string {
   const valor = bps / 100
   return Number.isInteger(valor) ? `${valor} %` : `${valor.toLocaleString('es-ES', { maximumFractionDigits: 2 })} %`
+}
+
+function porcentajeDe(parte: number, total: number): string {
+  if (total <= 0 || parte <= 0) return '0 %'
+  const centesimas = Math.round((parte * 10_000) / total)
+  const enteros = Math.floor(centesimas / 100)
+  const decimales = centesimas % 100
+  return decimales === 0 ? `${enteros} %` : `${enteros},${String(decimales).padStart(2, '0')} %`
 }
 
 function nombreDe(input: Input, resultado: Resultado, id: string): string {
@@ -54,17 +54,23 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
   }
 
   const quien = otorgante.trim() || '________________________________'
-  const tercios = resultado.tercios
+  const caudal = resultado.caudalCent
   const inventario = [
     ...input.inmuebles.map(inmueble =>
-      `${inmueble.nombre}, valorado en ${euros(inmueble.valorCent)}, con una participación del causante del ${porcentaje(inmueble.porcentajeCausanteBps)}${inmueble.cargasCent ? ` y cargas de ${euros(inmueble.cargasCent)}` : ''}.`),
+      `${inmueble.nombre}, en la participación del causante del ${porcentaje(inmueble.porcentajeCausanteBps)}${inmueble.cargasCent ? ', con las cargas que tenga al tiempo de la partición' : ''}.`),
     ...input.otrosActivos.map(activo =>
-      `${TIPO_ACTIVO[activo.tipo]}, valorado en ${euros(activo.valorCent)}, con una participación del causante del ${porcentaje(activo.porcentajeCausanteBps)}.`),
+      `${TIPO_ACTIVO[activo.tipo]}, en la participación del causante del ${porcentaje(activo.porcentajeCausanteBps)}.`),
   ]
-  if (input.deudasCent > 0) inventario.push(`Deudas declaradas: ${euros(input.deudasCent)}.`)
+  if (input.deudasCent > 0) inventario.push('Las deudas se restan del caudal por el importe que tengan al tiempo del fallecimiento.')
 
-  const herederos = resultado.porHeredero.map(persona =>
-    `${persona.nombre} recibe ${euros(persona.totalCent)}: ${euros(persona.estrictaCent)} de legítima estricta, ${euros(persona.mejoraCent)} de mejora y ${euros(persona.libreCent)} de libre disposición.`)
+  const herederos = resultado.porHeredero.map((persona) => {
+    const partes = [
+      persona.estrictaCent ? `${porcentajeDe(persona.estrictaCent, caudal)} de legítima estricta` : '',
+      persona.mejoraCent ? `${porcentajeDe(persona.mejoraCent, caudal)} de mejora` : '',
+      persona.libreCent ? `${porcentajeDe(persona.libreCent, caudal)} de libre disposición` : '',
+    ].filter(Boolean)
+    return `${persona.nombre} recibe el ${porcentajeDe(persona.totalCent, caudal)} del caudal${partes.length ? `: ${partes.join(', ')}` : ''}.`
+  })
 
   const mejora = input.disposiciones.mejora === null
     ? ['El tercio de mejora no se asignó de forma distinta, así que se reparte por igual entre las estirpes.']
@@ -92,7 +98,7 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
   const clausulas: Clausula[] = [
     {
       titulo: 'Advertencia',
-      parrafos: ['Este texto recoge las condiciones de la simulación para que el notario redacte el testamento abierto. No es escritura, no produce efectos y debe revisarlo el despacho antes de la firma.'],
+      parrafos: ['Este texto fija las cuotas en porcentaje, no en euros, porque el valor de mercado puede cambiar. No es escritura y el despacho debe revisarlo antes de la firma.'],
     },
     {
       titulo: 'Primera. Comparecencia',
@@ -104,8 +110,8 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
     {
       titulo: 'Segunda. Inventario declarado',
       parrafos: [
+        'Los bienes se identifican aquí. Su valor será el de mercado al tiempo de la partición, no el usado en la simulación.',
         ...inventario,
-        `El caudal hereditario orientativo de la simulación es ${euros(resultado.caudalCent)}. Los valores son los declarados por el otorgante; el notario los contrastará.`,
       ],
     },
     {
@@ -118,15 +124,15 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
     },
     {
       titulo: 'Cuarta. Legítima estricta',
-      parrafos: [`El tercio de legítima estricta asciende a ${euros(tercios.estrictaCent)} y se atribuye por partes iguales entre las estirpes.`],
+      parrafos: ['La legítima estricta es un tercio del caudal y se atribuye por partes iguales entre las estirpes.'],
     },
     {
       titulo: 'Quinta. Mejora',
-      parrafos: [`El tercio de mejora asciende a ${euros(tercios.mejoraCent)}.`, ...mejora],
+      parrafos: ['La mejora es un tercio del caudal.', ...mejora],
     },
     {
       titulo: 'Sexta. Libre disposición',
-      parrafos: [`El tercio de libre disposición asciende a ${euros(tercios.libreCent)}.`, ...libre],
+      parrafos: ['La libre disposición es un tercio del caudal.', ...libre],
     },
   ]
 
@@ -136,11 +142,9 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
       parrafos: [
         ...adjudicacion,
         resultado.patrimonioPendienteAdjudicarCent > 0
-          ? `Queda pendiente de adjudicar ${euros(resultado.patrimonioPendienteAdjudicarCent)}.`
+          ? 'Lo que no quede adjudicado se reparte conforme a las cuotas de este testamento.'
           : 'La adjudicación indicada cubre los inmuebles declarados.',
-        resultado.adjudicacion.some(fila => fila.diferenciaCent !== 0)
-          ? 'Las diferencias de valor entre lo adjudicado y el derecho de cada heredero podrán compensarse en metálico, conforme aprecie el notario.'
-          : 'No se aprecian diferencias de valor en la adjudicación declarada.',
+        'Si al partir, el valor de mercado de lo adjudicado no coincide con la cuota, la diferencia se compensará en metálico.',
       ],
     })
   }

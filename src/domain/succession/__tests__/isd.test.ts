@@ -53,6 +53,36 @@ describe('estimación ISD', () => {
     expect(estimacion?.revisar).toBe(true)
   })
 
+  it('trata a un nieto de libre disposición como grupo II si se marca descendiente', () => {
+    const input = entrada('madrid', {
+      otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
+      beneficiariosLibre: [{ id: 'lucas', nombre: 'Lucas Serrano', tipo: 'persona', parentesco: 'descendiente' }],
+      disposiciones: { mejora: null, libre: [{ herederoId: 'lucas', bps: 10_000 }] },
+    })
+    const lucas = estimarIsd(input, calcularSucesion(input))?.porHeredero.find(persona => persona.herederoId === 'lucas')
+    expect(lucas).toMatchObject({ grupo: 'II', cuotaCent: 28_250 })
+  })
+
+  it('trata a un sobrino como grupo III, por debajo del extraño', () => {
+    const base = {
+      otrosActivos: [{ id: 'activo', tipo: 'cuenta' as const, valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],
+      disposiciones: { mejora: null, libre: [{ herederoId: 'lucas', bps: 10_000 }] },
+    }
+    const sobrino = entrada('madrid', {
+      ...base,
+      beneficiariosLibre: [{ id: 'lucas', nombre: 'Lucas Serrano', tipo: 'persona', parentesco: 'cercano' }],
+    })
+    const extrano = entrada('madrid', {
+      ...base,
+      beneficiariosLibre: [{ id: 'lucas', nombre: 'Lucas Serrano', tipo: 'persona', parentesco: 'ajeno' }],
+    })
+    const cuotaSobrino = estimarIsd(sobrino, calcularSucesion(sobrino))?.porHeredero.find(persona => persona.herederoId === 'lucas')
+    const cuotaExtrano = estimarIsd(extrano, calcularSucesion(extrano))?.porHeredero.find(persona => persona.herederoId === 'lucas')
+    expect(cuotaSobrino?.grupo).toBe('III')
+    expect(cuotaSobrino?.cuotaCent).toBeGreaterThan(28_250)
+    expect(cuotaSobrino!.cuotaCent!).toBeLessThan(cuotaExtrano!.cuotaCent!)
+  })
+
   it('trata a una entidad de libre disposición como grupo IV', () => {
     const input = entrada('madrid', {
       otrosActivos: [{ id: 'activo', tipo: 'cuenta', valorCent: 60_000_000, porcentajeCausanteBps: 10_000 }],

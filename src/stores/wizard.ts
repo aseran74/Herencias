@@ -4,7 +4,7 @@ import { calcularSucesion, detectarCasosBloqueantes, type Input } from '../domai
 
 export const PASOS = [
   'Régimen', 'Patrimonio', 'Familia', 'Cribado', 'Estricta',
-  'Mejora', 'Libre', 'Adjudicación', 'Impuesto', 'Resumen',
+  'Mejora', 'Libre', 'Adjudicación', 'Impuesto', 'Albacea', 'Resumen',
 ] as const
 
 const inputInicial = (): Input => ({
@@ -77,6 +77,10 @@ export const useWizardStore = defineStore('succession-wizard', () => {
         ? ['La adjudicación de un inmueble no puede superar el 100 %.'] : []
     }
     if (numero === 9) return input.value.comunidadIsd ? [] : ['Elige la comunidad donde residía el causante.']
+    if (numero === 10) {
+      if (input.value.quiereAlbacea === null) return ['Indica si nombras albacea.']
+      if (input.value.quiereAlbacea && !input.value.nombreAlbacea.trim()) return ['Escribe el nombre del albacea.']
+    }
     return []
   }
 
@@ -110,8 +114,14 @@ export const useWizardStore = defineStore('succession-wizard', () => {
     erroresUi.value = []
   }
 
+  function cargar(nuevoInput: Input, nuevoPaso: number = PASOS.length) {
+    input.value = structuredClone(nuevoInput)
+    paso.value = Math.min(PASOS.length, Math.max(1, nuevoPaso))
+    erroresUi.value = []
+  }
+
   return {
     paso, input, resultado, bloqueado, descendientes, beneficiarios,
-    erroresUi, pasoValido, validarPaso, avanzar, retroceder, irA, reiniciar,
+    erroresUi, pasoValido, validarPaso, avanzar, retroceder, irA, reiniciar, cargar,
   }
 })

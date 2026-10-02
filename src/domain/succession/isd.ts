@@ -22,7 +22,9 @@ const TARIFA_ESTATAL = [
 ] as const
 
 const REDUCCION_GRUPO_II_CENT = 1_595_687
+const REDUCCION_GRUPO_III_CENT = 799_346
 const COEFICIENTE_GRUPO_II_BPS = 10_000
+const COEFICIENTE_GRUPO_III_BPS = 15_882
 const COEFICIENTE_GRUPO_IV_BPS = 20_000
 
 export const COMUNIDADES_ISD: { id: ComunidadIsd, nombre: string }[] = [
@@ -50,7 +52,7 @@ export const COMUNIDADES_ISD: { id: ComunidadIsd, nombre: string }[] = [
 export interface CuotaIsd {
   herederoId: string
   nombre: string
-  grupo: 'II' | 'IV'
+  grupo: 'II' | 'III' | 'IV'
   baseImponibleCent: number
   cuotaCent: number | null
 }
@@ -74,16 +76,31 @@ export function cuotaIntegraEstatalCent(baseLiquidableCent: number): number {
   return tramo.cuotaCent + aplicarBps(baseLiquidableCent - tramo.desdeCent, tramo.tipoBps)
 }
 
-function cuotaConBonificacion(baseCent: number, grupo: 'II' | 'IV', reduccionCent: number, bonificacionBps: number): number {
-  const liquidable = Math.max(0, baseCent - (grupo === 'II' ? reduccionCent : 0))
-  const tributaria = aplicarBps(
-    cuotaIntegraEstatalCent(liquidable),
-    grupo === 'II' ? COEFICIENTE_GRUPO_II_BPS : COEFICIENTE_GRUPO_IV_BPS,
-  )
+function cuotaConBonificacion(baseCent: number, grupo: 'II' | 'III' | 'IV', reduccionCent: number, bonificacionBps: number): number {
+  const coeficiente = grupo === 'II'
+    ? COEFICIENTE_GRUPO_II_BPS
+    : grupo === 'III' ? COEFICIENTE_GRUPO_III_BPS : COEFICIENTE_GRUPO_IV_BPS
+  const liquidable = Math.max(0, baseCent - (grupo === 'IV' ? 0 : reduccionCent))
+  const tributaria = aplicarBps(cuotaIntegraEstatalCent(liquidable), coeficiente)
   return aplicarBps(tributaria, 10_000 - bonificacionBps)
 }
 
-function liquidar(comunidad: ComunidadIsd, grupo: 'II' | 'IV', baseCent: number): { cuotaCent: number | null, revisar: boolean } {
+function liquidar(comunidad: ComunidadIsd, grupo: 'II' | 'III' | 'IV', baseCent: number): { cuotaCent: number | null, revisar: boolean } {
+  if (grupo === 'III') {
+    if (comunidad === 'cataluna' || comunidad === 'navarra' || comunidad === 'pais_vasco') {
+      return { cuotaCent: null, revisar: true }
+    }
+    const reduccion = comunidad === 'galicia' ? 25_000_000 : REDUCCION_GRUPO_III_CENT
+    const bonificacion = comunidad === 'canarias'
+      ? 9990
+      : comunidad === 'madrid' || comunidad === 'ceuta' || comunidad === 'melilla'
+        ? 5000
+        : comunidad === 'valencia' || comunidad === 'baleares'
+          ? 2500
+          : 0
+    return { cuotaCent: cuotaConBonificacion(baseCent, 'III', reduccion, bonificacion), revisar: true }
+  }
+
   if (grupo === 'IV') {
     if (comunidad === 'canarias') return { cuotaCent: cuotaConBonificacion(baseCent, 'IV', 0, 9990), revisar: false }
     if (comunidad === 'ceuta' || comunidad === 'melilla') return { cuotaCent: cuotaConBonificacion(baseCent, 'IV', 0, 5000), revisar: false }
@@ -164,7 +181,10 @@ export function estimarIsd(input: Input, resultado: Resultado): EstimacionIsd | 
   }
 
   const porHeredero = resultado.porHeredero.map((persona) => {
-    const grupo = descendientes.has(persona.herederoId) ? 'II' as const : 'IV' as const
+    const libre = input.beneficiariosLibre.find(beneficiario => beneficiario.id === persona.herederoId)
+    const grupo = descendientes.has(persona.herederoId) || libre?.parentesco === 'descendiente'
+      ? 'II' as const
+      : libre?.parentesco === 'cercano' ? 'III' as const : 'IV' as const
     const liquidacion = liquidar(comunidad, grupo, persona.totalCent)
     if (liquidacion.revisar) revisar = true
     return {
@@ -176,8 +196,11 @@ export function estimarIsd(input: Input, resultado: Resultado): EstimacionIsd | 
     }
   })
 
+  if (porHeredero.some(persona => persona.grupo === 'III')) {
+    notas.add('Sobrino, hermano o tío se estiman como grupo III. La reducción y el coeficiente son menores que los de un extraño, y no tienen la bonificación del 99 % de los hijos y nietos.')
+  }
   if (porHeredero.some(persona => persona.grupo === 'IV')) {
-    notas.add('Quien no es descendiente se estima como grupo IV, con coeficiente 2,0000 y sin bonificación familiar, salvo Canarias, Ceuta y Melilla.')
+    notas.add('Quien no es familiar se estima como grupo IV, con coeficiente 2,0000 y sin bonificación familiar, salvo Canarias, Ceuta y Melilla.')
   }
   if (comunidad === 'cataluna') notas.add('Cataluña tiene tarifa y bonificación propias. El despacho calculará la cuota.')
   if (comunidad === 'navarra') notas.add('Navarra tiene tarifa foral. El despacho calculará la cuota.')
