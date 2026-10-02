@@ -9,8 +9,9 @@ export const TENANT_DEMO_ID = 'despacho-demo'
  * viven en Postgres. Sin ellas, los tests siguen en memoria.
  */
 export function createRepositories(): { leads: LeadRepository; tenants: TenantRepository } {
-  const url = process.env.INSFORGE_URL
-  const apiKey = process.env.INSFORGE_API_KEY
+  const config = useRuntimeConfig()
+  const url = config.insforgeUrl
+  const apiKey = config.insforgeApiKey
   if (url && apiKey) return createInsforgeRepositories(url, apiKey)
   return {
     leads: new InMemoryLeadRepository(),

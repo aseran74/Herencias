@@ -1,7 +1,3 @@
-import { config as cargarEntorno } from 'dotenv'
-
-cargarEntorno({ path: '.env.local' })
-
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: false },
@@ -25,5 +21,9 @@ export default defineNuxtConfig({
   },
   typescript: {
     strict: true,
+  },
+  runtimeConfig: {
+    insforgeUrl: process.env.INSFORGE_URL || '',
+    insforgeApiKey: process.env.INSFORGE_API_KEY || '',
   },
 })
