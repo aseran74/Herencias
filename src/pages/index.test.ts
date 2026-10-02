@@ -4,6 +4,7 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { useWizardStore } from '../stores/wizard'
 import IndexPage from './index.vue'
 
 describe('wizard', () => {
@@ -54,6 +55,15 @@ describe('wizard', () => {
     await wrapper.get('input[value="gananciales"]').setValue()
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     expect(wrapper.text()).toContain('Patrimonio que entra')
+  })
+
+  it('puede abrir una simulación convertida en Proxy por Vue', () => {
+    const store = useWizardStore()
+    store.input.hijos.push({ id: 'ana', nombre: 'Ana', vive: true, descendientes: [] })
+
+    expect(() => store.cargar(store.input, 3)).not.toThrow()
+    expect(store.paso).toBe(3)
+    expect(store.input.hijos[0]?.nombre).toBe('Ana')
   })
 
   it('envía un caso foral al resumen sin reparto', async () => {

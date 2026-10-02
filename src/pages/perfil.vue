@@ -60,8 +60,13 @@ function fecha(valor: string): string {
 }
 
 async function abrir(simulacion: SimulacionGuardada) {
-  wizard.cargar(simulacion.input, simulacion.paso)
-  await navigateTo('/')
+  error.value = ''
+  try {
+    wizard.cargar(simulacion.input, simulacion.paso)
+    await navigateTo('/')
+  } catch {
+    error.value = 'No se pudo abrir esta simulación. Inténtalo de nuevo.'
+  }
 }
 
 function editar(simulacion: SimulacionGuardada) {

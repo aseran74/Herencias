@@ -125,7 +125,9 @@ export const useWizardStore = defineStore('succession-wizard', () => {
   }
 
   function cargar(nuevoInput: Input, nuevoPaso: number = PASOS.length) {
-    input.value = structuredClone(nuevoInput)
+    // Los objetos guardados dentro de un ref pasan a ser Proxy de Vue.
+    // Una copia JSON elimina el Proxy y conserva íntegro este contrato de datos.
+    input.value = JSON.parse(JSON.stringify(nuevoInput)) as Input
     paso.value = Math.min(PASOS.length, Math.max(1, nuevoPaso))
     erroresUi.value = []
   }
