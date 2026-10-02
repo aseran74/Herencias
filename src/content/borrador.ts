@@ -1,3 +1,4 @@
+import { parrafosAlbacea } from './albacea'
 import type { Input, Resultado } from '../domain/succession'
 
 export interface Clausula {
@@ -100,6 +101,15 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
         return `${calidad} ${nombreDe(input, resultado, reparto.herederoId)} recibe el ${porcentaje(reparto.bps)} del tercio de libre disposición.`
       })
 
+  const estrictaTexto = ['La legítima estricta es un tercio del caudal y se atribuye por partes iguales entre las estirpes.']
+  const bienEstricta = input.inmuebles.find(inmueble => inmueble.id === input.atribucionEstricta.inmuebleId)
+  if (input.atribucionEstricta.tipo === 'inmueble' && bienEstricta) {
+    estrictaTexto.push(`En pago de esa estricta atribuye ${bienEstricta.nombre} a los herederos legitimarios, por estirpes. Si al partir el valor de mercado no cubre o excede este tercio, la diferencia se compensará en metálico.`)
+  }
+  if (input.atribucionEstricta.tipo === 'alquiler' && bienEstricta) {
+    estrictaTexto.push(`Atribuye las rentas de alquiler de ${bienEstricta.nombre} a los herederos legitimarios, por estirpes. El inmueble permanece en el caudal, salvo otra adjudicación.`)
+  }
+
   const adjudicacion = input.inmuebles.flatMap((inmueble) => {
     const partes = input.adjudicaciones.filter(fila => fila.inmuebleId === inmueble.id && fila.bps > 0)
     if (!partes.length) return [`${inmueble.nombre} queda pendiente de adjudicar.`]
@@ -136,7 +146,7 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
     },
     {
       titulo: 'Cuarta. Legítima estricta',
-      parrafos: ['La legítima estricta es un tercio del caudal y se atribuye por partes iguales entre las estirpes.'],
+      parrafos: estrictaTexto,
     },
     {
       titulo: 'Quinta. Mejora',
@@ -177,11 +187,9 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
 
   clausulas.push({
     titulo: 'Albacea',
-    parrafos: [
-      input.quiereAlbacea && input.nombreAlbacea.trim()
-        ? `Nombra albacea a ${input.nombreAlbacea.trim()}, para que cumpla este testamento con las facultades ordinarias de la ley.`
-        : 'No nombra albacea.',
-    ],
+    parrafos: input.quiereAlbacea && input.nombreAlbacea.trim()
+      ? parrafosAlbacea(input.nombreAlbacea.trim(), input.facultadesAlbacea)
+      : ['No nombra albacea.'],
   })
 
   clausulas.push({

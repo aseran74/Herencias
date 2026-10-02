@@ -6,6 +6,10 @@ export class InMemoryLeadRepository implements LeadRepository {
   async save(lead: LeadNuevo): Promise<Lead> {
     const guardado: Lead = {
       ...structuredClone(lead),
+      citaExpress: lead.citaExpress ?? false,
+      notaExpress: lead.notaExpress ?? '',
+      grabacionUrl: lead.grabacionUrl ?? null,
+      grabacionKey: lead.grabacionKey ?? null,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       consentimientoAt: new Date().toISOString(),

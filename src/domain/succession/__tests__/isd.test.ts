@@ -18,6 +18,13 @@ function entrada(comunidad: Input['comunidadIsd'], extra: Partial<Input> = {}): 
     comunidadIsd: comunidad,
     quiereAlbacea: null,
     nombreAlbacea: '',
+    facultadesAlbacea: {
+      informacionBancaria: false,
+      gestionarPagos: false,
+      pagarDeudasImpuestos: false,
+      conservarBienes: false,
+    },
+    atribucionEstricta: { tipo: null, inmuebleId: null },
     flags: {
       testamentoAnterior: false,
       hijoConDiscapacidad: false,

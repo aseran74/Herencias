@@ -23,6 +23,13 @@ function entrada(extra: Partial<Input> = {}): Input {
     comunidadIsd: null,
     quiereAlbacea: true,
     nombreAlbacea: 'Luis Ortega',
+    facultadesAlbacea: {
+      informacionBancaria: true,
+      gestionarPagos: true,
+      pagarDeudasImpuestos: true,
+      conservarBienes: true,
+    },
+    atribucionEstricta: { tipo: 'inmueble', inmuebleId: 'casa' },
     flags: {
       testamentoAnterior: false,
       hijoConDiscapacidad: false,
@@ -44,7 +51,9 @@ describe('borrador notarial', () => {
     expect(texto).toContain('33,33 %')
     expect(texto).not.toContain('€')
     expect(texto).toContain('Luis Ortega')
+    expect(texto).toContain('cuentas del causante')
     expect(texto).toContain('Vivienda')
+    expect(texto).toContain('herederos legitimarios')
   })
 
   it('no redacta un caso que exige revisión', () => {

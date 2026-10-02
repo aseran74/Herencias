@@ -125,6 +125,13 @@ export interface Input {
   comunidadIsd: ComunidadIsd | null
   quiereAlbacea: boolean | null
   nombreAlbacea: string
+  facultadesAlbacea: {
+    informacionBancaria: boolean
+    gestionarPagos: boolean
+    pagarDeudasImpuestos: boolean
+    conservarBienes: boolean
+  }
+  atribucionEstricta: { tipo: 'inmueble' | 'alquiler' | null; inmuebleId: string | null }
   flags: {
     testamentoAnterior: boolean
     hijoConDiscapacidad: boolean
@@ -169,21 +176,22 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 2. Patrimonio: inmuebles, participación, cargas, otros activos y deudas.
 3. Familia: hijos, premoriencia y descendientes. La situación del cónyuge ya se recoge en el paso 1.
 4. Cribado: flags sí/no.
-5. Legítima estricta: automática y visual.
+5. Legítima estricta: automática y visual. Opcionalmente se puede dejar un inmueble concreto o sus rentas de alquiler a los legitimarios, sin alterar el importe del tercio.
 6. Mejora: porcentajes a descendientes, suma validada en vivo.
 7. Libre: personas o entidades.
 8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias.
 9. Impuesto: comunidad de residencia habitual del causante y coste orientativo por heredero.
-10. Albacea: sí o no; si es sí, un descendiente u otra persona.
-11. Resumen: barras, impuesto, borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura.
+10. Albacea: sí o no; si es sí, un descendiente u otra persona, y facultades expresas sobre cuentas, pagos, deudas y conservación de bienes.
+11. Resumen: barras, impuesto, borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura. Opcionalmente el usuario puede grabar un mensaje breve (máximo 30 s) y pedir cita express con el notario; el vídeo no es escritura ni produce efectos por sí solo.
 
 ## 9. Leads e InsForge
 
-Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, estado_resultado, input_json, resultado_json)`.
+Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, estado_resultado, input_json, resultado_json, cita_express, nota_express, grabacion_url, grabacion_key)`.
 
 - Consentimiento no premarcado con enlace a privacidad.
 - No persistir antes del envío.
-- El navegador envía a `POST /api/leads`; Nitro valida, recalcula y persiste con credencial administrativa.
+- El navegador envía a `POST /api/leads` (JSON o multipart con vídeo opcional); Nitro valida, recalcula y persiste con credencial administrativa.
+- La grabación, si existe, se guarda en el cubo privado `grabaciones-express`; se persisten `url` y `key`.
 - RLS bloquea acceso directo público a `leads`; la lectura queda reservada al despacho.
 
 ## 10. Perfil y simulaciones guardadas

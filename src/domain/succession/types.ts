@@ -96,6 +96,18 @@ export interface Adjudicacion {
   bps: number
 }
 
+export interface FacultadesAlbacea {
+  informacionBancaria: boolean
+  gestionarPagos: boolean
+  pagarDeudasImpuestos: boolean
+  conservarBienes: boolean
+}
+
+export interface AtribucionEstricta {
+  tipo: 'inmueble' | 'alquiler' | null
+  inmuebleId: string | null
+}
+
 export interface Input {
   regimen: Regimen
   situacionConyugal: SituacionConyugal | null
@@ -112,6 +124,8 @@ export interface Input {
   comunidadIsd: ComunidadIsd | null
   quiereAlbacea: boolean | null
   nombreAlbacea: string
+  facultadesAlbacea: FacultadesAlbacea
+  atribucionEstricta: AtribucionEstricta
   flags: {
     testamentoAnterior: boolean
     hijoConDiscapacidad: boolean

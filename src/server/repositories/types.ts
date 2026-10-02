@@ -9,6 +9,10 @@ export interface Lead {
   contacto: ContactoLead
   input: Input
   resultado: Resultado
+  citaExpress: boolean
+  notaExpress: string
+  grabacionUrl: string | null
+  grabacionKey: string | null
 }
 
 export interface LeadNuevo {
@@ -16,6 +20,10 @@ export interface LeadNuevo {
   contacto: ContactoLead
   input: Input
   resultado: Resultado
+  citaExpress?: boolean
+  notaExpress?: string
+  grabacionUrl?: string | null
+  grabacionKey?: string | null
 }
 
 export interface LeadRepository {

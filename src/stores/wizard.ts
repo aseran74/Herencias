@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { facultadesIniciales } from '../content/albacea'
 import { calcularSucesion, detectarCasosBloqueantes, type Input } from '../domain/succession'
 
 export const PASOS = [
@@ -23,6 +24,8 @@ const inputInicial = (): Input => ({
   comunidadIsd: null,
   quiereAlbacea: null,
   nombreAlbacea: '',
+  facultadesAlbacea: facultadesIniciales(),
+  atribucionEstricta: { tipo: null, inmuebleId: null },
   flags: {
     testamentoAnterior: false,
     hijoConDiscapacidad: false,
@@ -71,6 +74,14 @@ export const useWizardStore = defineStore('succession-wizard', () => {
     }
     if (numero === 3) {
       return descendientes.value.length ? [] : ['Añade un hijo vivo o nietos de un hijo premuerto.']
+    }
+    if (numero === 5) {
+      const atribucion = input.value.atribucionEstricta
+      if (!atribucion.tipo) return []
+      if (!atribucion.inmuebleId) return ['Elige el inmueble que dejas a los legitimarios.']
+      return input.value.inmuebles.some(inmueble => inmueble.id === atribucion.inmuebleId)
+        ? []
+        : ['El inmueble elegido ya no está en el inventario.']
     }
     if (numero === 6 && input.value.disposiciones.mejora !== null) {
       return input.value.disposiciones.mejora.reduce((s, r) => s + r.bps, 0) === 10000

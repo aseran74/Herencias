@@ -315,6 +315,7 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .pregunta label { display: flex; align-items: center; gap: .35rem; }
 .cifra-destacada { margin: 1rem 0; padding: 1rem; border-left: .35rem solid var(--oro); background: #fffaf0; }
 .cifra-destacada strong { display: block; font-family: Fraunces, serif; font-size: 2rem; }
+.atribucion-estricta { margin-top: 1.4rem; }
 .lista-limpia { margin: 0; padding: 0; list-style: none; }
 .lista-limpia li { padding: .65rem 0; border-bottom: 1px solid var(--linea); }
 .porcentajes { display: grid; gap: .9rem; margin-top: 1rem; }
@@ -352,6 +353,17 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .libre-resumen h3 { margin-top: 0; }
 .usufructo-conyuge { margin: 1.3rem 0; padding: 1rem; border-left: .35rem solid var(--oro); background: color-mix(in srgb, var(--oro) 12%, white); }
 .usufructo-conyuge h3 { margin-top: .2rem; }
+.facultades-albacea {
+  display: grid;
+  gap: .7rem;
+  margin-top: 1.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--verde) 35%, var(--linea));
+  border-radius: .7rem;
+  background: color-mix(in srgb, var(--verde) 6%, white);
+}
+.facultades-albacea legend { font-weight: 700; }
+.aviso-facultades { margin: .2rem 0 0; color: var(--apagado); font-size: .9rem; }
 .leyenda-tercios { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; margin: 1rem 0; }
 .leyenda-tercios span { display: inline-flex; align-items: center; gap: .4rem; }
 .muestra { width: .85rem; height: .85rem; border-radius: 999px; }
@@ -374,6 +386,23 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .borrador p { max-width: 68ch; }
 .lead { display: grid; gap: .7rem; max-width: 36rem; margin-top: 2rem; padding: 1.2rem; border: 1px solid var(--linea); background: #fffaf0; }
 .lead h3 { margin-top: 0; }
+.acciones-lead { display: flex; flex-wrap: wrap; gap: .6rem; }
+.cita-express {
+  display: grid;
+  gap: .75rem;
+  max-width: 36rem;
+  margin-top: 1.8rem;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--verde) 40%, var(--linea));
+  border-radius: .7rem;
+  background: color-mix(in srgb, var(--verde) 6%, white);
+}
+.cita-express h3 { margin-top: .1rem; }
+.cita-express form { display: grid; gap: .7rem; }
+.cita-express textarea { width: 100%; min-height: 5rem; resize: vertical; }
+.grabacion-express { display: grid; gap: .7rem; }
+.acciones-grabacion { display: flex; flex-wrap: wrap; gap: .5rem; }
+.video-express { width: 100%; max-height: 16rem; background: #111; }
 .guardar-simulacion {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, .8fr);

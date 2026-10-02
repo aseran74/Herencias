@@ -18,6 +18,13 @@ const input: Input = {
   comunidadIsd: null,
   quiereAlbacea: null,
   nombreAlbacea: '',
+  facultadesAlbacea: {
+    informacionBancaria: false,
+    gestionarPagos: false,
+    pagarDeudasImpuestos: false,
+    conservarBienes: false,
+  },
+  atribucionEstricta: { tipo: null, inmuebleId: null },
   flags: {
     testamentoAnterior: false,
     hijoConDiscapacidad: false,
@@ -41,9 +48,13 @@ describe('adapters en memoria', () => {
       },
       input,
       resultado: calcularSucesion(input),
+      citaExpress: true,
+      notaExpress: 'Cita por la mañana',
     })
 
     expect(guardado.id).toBeTruthy()
+    expect(guardado.citaExpress).toBe(true)
+    expect(guardado.notaExpress).toBe('Cita por la mañana')
     expect(await leads.findById('despacho-demo', guardado.id)).toMatchObject({ id: guardado.id })
     expect(await leads.findById('otro-despacho', guardado.id)).toBeNull()
   })

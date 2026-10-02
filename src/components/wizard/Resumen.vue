@@ -5,6 +5,8 @@ import { guardarPendiente } from '../../composables/useGuardadoPendiente'
 import { useSimulaciones } from '../../composables/useSimulaciones'
 import { TEXTOS_LEGALES } from '../../content/legal'
 import { redactarBorrador } from '../../content/borrador'
+import Albacea from './Albacea.vue'
+import GrabacionExpress from './GrabacionExpress.vue'
 import { COMUNIDADES_ISD, estimarIsd } from '../../domain/succession'
 import { useAuthStore } from '../../stores/auth'
 import { useWizardStore } from '../../stores/wizard'
@@ -12,6 +14,10 @@ const store = useWizardStore()
 const auth = useAuthStore()
 const contacto = ref({ nombre: '', email: '', telefono: '', consentimiento_rgpd: false })
 const tituloSimulacion = ref('Herencia familiar')
+const notaExpress = ref('')
+const grabacion = ref<Blob | null>(null)
+const enviandoExpress = ref(false)
+const estadoExpress = ref<'reposo' | 'exito' | 'error'>('reposo')
 const guardando = ref(false)
 const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
@@ -61,17 +67,35 @@ function imprimirBorrador() {
   ventana.focus()
   ventana.print()
 }
-async function enviar() {
+async function enviar(citaExpress = false) {
   if (!contacto.value.consentimiento_rgpd) return
-  enviando.value = true
+  enviando.value = !citaExpress
+  enviandoExpress.value = citaExpress
   estadoEnvio.value = 'reposo'
+  estadoExpress.value = 'reposo'
   try {
-    await $fetch('/api/leads', { method: 'POST', body: { input: store.input, contacto: contacto.value } })
-    estadoEnvio.value = 'exito'
+    const payload = {
+      input: store.input,
+      contacto: contacto.value,
+      citaExpress,
+      notaExpress: citaExpress ? notaExpress.value : '',
+    }
+    if (citaExpress && grabacion.value) {
+      const cuerpo = new FormData()
+      cuerpo.append('payload', JSON.stringify(payload))
+      cuerpo.append('grabacion', grabacion.value, 'mensaje.webm')
+      await $fetch('/api/leads', { method: 'POST', body: cuerpo })
+    } else {
+      await $fetch('/api/leads', { method: 'POST', body: payload })
+    }
+    if (citaExpress) estadoExpress.value = 'exito'
+    else estadoEnvio.value = 'exito'
   } catch {
-    estadoEnvio.value = 'error'
+    if (citaExpress) estadoExpress.value = 'error'
+    else estadoEnvio.value = 'error'
   } finally {
     enviando.value = false
+    enviandoExpress.value = false
   }
 }
 
@@ -160,6 +184,14 @@ async function guardarSimulacion() {
           </li>
         </ul>
       </section>
+      <section v-if="store.input.atribucionEstricta.tipo && store.input.atribucionEstricta.inmuebleId" class="libre-resumen" data-testid="resumen-estricta-bien">
+        <h3>{{ store.input.atribucionEstricta.tipo === 'alquiler' ? 'Alquiler para los legitimarios' : 'Inmueble para los legitimarios' }}</h3>
+        <p>
+          {{ store.input.atribucionEstricta.tipo === 'alquiler' ? 'Las rentas de' : 'En pago de la estricta se atribuye' }}
+          {{ store.input.inmuebles.find(bien => bien.id === store.input.atribucionEstricta.inmuebleId)?.nombre }}.
+          El tercio no cambia de importe.
+        </p>
+      </section>
       <p class="leyenda-tercios">
         <span><i class="muestra estricta" /> Estricta</span>
         <span><i class="muestra mejora" /> Mejora</span>
@@ -229,18 +261,7 @@ async function guardarSimulacion() {
       <p class="nota">{{ TEXTOS_LEGALES.avisoIsd }}</p>
     </section>
 
-    <fieldset class="cribado" data-testid="albacea">
-      <legend>¿Quieres nombrar albacea?</legend>
-      <div class="pregunta">
-        <span>La persona que hará cumplir el testamento.</span>
-        <label><input v-model="store.input.quiereAlbacea" data-testid="albacea-si" type="radio" name="albacea" :value="true"> Sí</label>
-        <label><input v-model="store.input.quiereAlbacea" data-testid="albacea-no" type="radio" name="albacea" :value="false"> No</label>
-      </div>
-      <label v-if="store.input.quiereAlbacea" class="campo-suelto">
-        Nombre del albacea
-        <input v-model="store.input.nombreAlbacea" data-testid="albacea-nombre" autocomplete="name">
-      </label>
-    </fieldset>
+    <Albacea compacto />
 
     <article v-if="borrador" class="borrador" data-testid="borrador">
       <p class="kicker">Borrador para el notario</p>
@@ -252,6 +273,17 @@ async function guardarSimulacion() {
       </section>
       <button type="button" class="secundario no-imprimir" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
     </article>
+
+    <section class="cita-express" aria-labelledby="titulo-express" data-testid="cita-express">
+      <p class="kicker">Notario</p>
+      <h3 id="titulo-express">Grabación express y cita rápida</h3>
+      <p>{{ TEXTOS_LEGALES.avisoExpress }}</p>
+      <GrabacionExpress v-model="grabacion" />
+      <label>
+        Recado para el notario (opcional)
+        <textarea v-model="notaExpress" maxlength="1000" rows="3" placeholder="Por ejemplo: prefiero cita por la mañana o quiero firmar esta semana."></textarea>
+      </label>
+    </section>
 
     <section class="guardar-simulacion" aria-labelledby="titulo-guardar">
       <div>
@@ -272,14 +304,21 @@ async function guardarSimulacion() {
       <p v-if="estadoGuardado === 'error'" class="alerta" role="alert">No se pudo guardar. Inténtalo de nuevo.</p>
     </section>
 
-    <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar">
+    <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar(false)">
       <h3>{{ store.resultado.estado === 'revision_obligatoria' ? 'Solicita una revisión' : 'Revisa el resultado con el despacho' }}</h3>
       <label>Nombre<input v-model="contacto.nombre" required autocomplete="name"></label>
       <label>Email<input v-model="contacto.email" required type="email" autocomplete="email"></label>
       <label>Teléfono<input v-model="contacto.telefono" required type="tel" autocomplete="tel"></label>
       <label class="check"><input v-model="contacto.consentimiento_rgpd" data-testid="consentimiento" type="checkbox" required> {{ TEXTOS_LEGALES.consentimiento }}</label>
       <a href="/privacidad">{{ TEXTOS_LEGALES.privacidad }}</a>
-      <button type="submit" :disabled="enviando || !contacto.consentimiento_rgpd || !albaceaLista">{{ enviando ? 'Enviando…' : 'Hablar con el despacho' }}</button>
+      <div class="acciones-lead">
+        <button type="button" data-testid="cita-express-enviar" :disabled="enviandoExpress || !contacto.consentimiento_rgpd || !albaceaLista" @click="enviar(true)">
+          {{ enviandoExpress ? 'Enviando…' : 'Pedir cita express' }}
+        </button>
+        <button type="submit" :disabled="enviando || !contacto.consentimiento_rgpd || !albaceaLista">{{ enviando ? 'Enviando…' : 'Hablar con el despacho' }}</button>
+      </div>
+      <p v-if="estadoExpress === 'exito'" class="exito" role="status">Solicitud express enviada. El despacho te citará en breve.</p>
+      <p v-if="estadoExpress === 'error'" class="alerta" role="alert">No se pudo enviar la cita express. Inténtalo de nuevo.</p>
       <p v-if="estadoEnvio === 'exito'" class="exito" role="status">Solicitud enviada. Te contactaremos pronto.</p>
       <p v-if="estadoEnvio === 'error'" class="alerta" role="alert">No se pudo enviar. Inténtalo de nuevo.</p>
     </form>

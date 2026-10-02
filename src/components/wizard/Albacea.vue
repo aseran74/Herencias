@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FACULTADES_ALBACEA } from '../../content/albacea'
 import { useWizardStore } from '../../stores/wizard'
 
 defineProps<{ compacto?: boolean }>()
@@ -15,7 +16,9 @@ function rellenar(evento: Event) {
     <template v-if="!compacto">
       <p class="kicker">10 · Albacea</p>
       <h2 id="titulo-albacea">¿Nombras albacea?</h2>
-      <p class="lede">Puedes designar a un descendiente o a otra persona para que cumpla el testamento.</p>
+      <p class="lede">
+        El albacea hace cumplir el testamento. Puedes darle permiso expreso para pedir información de las cuentas y gestionar cobros y pagos de la herencia.
+      </p>
     </template>
     <h3 v-else id="titulo-albacea">Nombrar albacea</h3>
 
@@ -44,5 +47,16 @@ function rellenar(evento: Event) {
         <input v-model="store.input.nombreAlbacea" data-testid="albacea-nombre" autocomplete="name">
       </label>
     </div>
+    <fieldset v-if="store.input.quiereAlbacea" class="facultades-albacea">
+      <legend>Permisos que le das</legend>
+      <p class="nota">Van al borrador para que el notario los estudie. Puedes quitar los que no quieras.</p>
+      <label v-for="facultad in FACULTADES_ALBACEA" :key="facultad.id" class="check">
+        <input v-model="store.input.facultadesAlbacea[facultad.id]" type="checkbox">
+        {{ facultad.texto }}
+      </label>
+      <p class="aviso-facultades">
+        Esto no entrega contraseñas ni un acceso personal ilimitado. Tampoco autoriza a vender bienes ni a cambiar el reparto. Cada banco y el notario pedirán la documentación correspondiente.
+      </p>
+    </fieldset>
   </section>
 </template>

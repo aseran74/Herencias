@@ -65,6 +65,21 @@ export const inputSucesionSchema = z.object({
   ]).nullable(),
   quiereAlbacea: z.boolean().nullable(),
   nombreAlbacea: z.string().trim().max(160),
+  facultadesAlbacea: z.object({
+    informacionBancaria: z.boolean(),
+    gestionarPagos: z.boolean(),
+    pagarDeudasImpuestos: z.boolean(),
+    conservarBienes: z.boolean(),
+  }).default({
+    informacionBancaria: true,
+    gestionarPagos: true,
+    pagarDeudasImpuestos: true,
+    conservarBienes: true,
+  }),
+  atribucionEstricta: z.object({
+    tipo: z.enum(['inmueble', 'alquiler']).nullable(),
+    inmuebleId: z.string().trim().min(1).max(100).nullable(),
+  }).default({ tipo: null, inmuebleId: null }),
   flags: z.object({
     testamentoAnterior: z.boolean(),
     hijoConDiscapacidad: z.boolean(),

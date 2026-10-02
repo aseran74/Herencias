@@ -21,6 +21,13 @@ const input: Input = {
   comunidadIsd: null,
   quiereAlbacea: null,
   nombreAlbacea: '',
+  facultadesAlbacea: {
+    informacionBancaria: false,
+    gestionarPagos: false,
+    pagarDeudasImpuestos: false,
+    conservarBienes: false,
+  },
+  atribucionEstricta: { tipo: null, inmuebleId: null },
   flags: {
     testamentoAnterior: false,
     hijoConDiscapacidad: false,

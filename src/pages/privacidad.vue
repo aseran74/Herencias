@@ -10,7 +10,8 @@
       </p>
       <p>
         No se guarda información durante el recorrido. El nombre, correo, teléfono,
-        respuestas y resultado se envían solo al confirmar el formulario con el consentimiento marcado.
+        respuestas, resultado y, si la hay, la grabación express se envían solo al
+        confirmar el formulario con el consentimiento marcado.
       </p>
       <p class="aviso">
         Texto provisional: el despacho debe completar responsable, base jurídica, conservación,
