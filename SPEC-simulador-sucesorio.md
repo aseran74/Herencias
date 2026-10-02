@@ -165,7 +165,7 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 7. Libre: personas o entidades.
 8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias.
 9. Impuesto: comunidad de residencia habitual del causante y coste orientativo por heredero.
-10. Resumen: barras, impuesto, albacea (sí/no y nombre), avisos, texto legal y lead.
+10. Resumen: barras, impuesto, albacea (sí/no y nombre), borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura.
 
 ## 9. Leads e InsForge
 

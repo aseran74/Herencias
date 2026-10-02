@@ -8,6 +8,8 @@ export const TEXTOS_LEGALES = {
   privacidad: 'Consulta la política de privacidad.',
   articulos:
     'Cálculo orientativo conforme a los arts. 806–808, 818, 823 y concordantes del Código Civil. Las referencias deben ser validadas por el despacho antes de publicar.',
+  avisoBorrador:
+    'Borrador orientativo para que el notario redacte la escritura. No es un testamento, no se firma tal cual y el despacho debe revisarlo.',
   avisoIsd:
     'Estimación orientativa del impuesto de sucesiones. Trata a los descendientes como grupo II, sin patrimonio preexistente y sin reducciones por vivienda, discapacidad o empresa familiar. Se liquida según la residencia habitual del causante en los cinco años anteriores. El despacho debe validar la cuota.',
 } as const

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { centimosAEuros } from '../../composables/useSuccession'
 import { TEXTOS_LEGALES } from '../../content/legal'
+import { redactarBorrador } from '../../content/borrador'
 import { COMUNIDADES_ISD, estimarIsd } from '../../domain/succession'
 import { useWizardStore } from '../../stores/wizard'
 const store = useWizardStore()
@@ -13,6 +14,7 @@ const receptoresLibre = computed(() =>
   store.resultado.porHeredero.filter(persona => persona.libreCent > 0),
 )
 const estimacion = computed(() => estimarIsd(store.input, store.resultado))
+const borrador = computed(() => redactarBorrador(store.input, store.resultado, contacto.value.nombre))
 const albaceaLista = computed(() => {
   if (store.input.quiereAlbacea === null) return false
   return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length >= 2
@@ -41,6 +43,16 @@ const etiquetasMotivo: Record<string, string> = {
   BIENES_EXTRANJERO: 'Hay bienes en el extranjero.',
   PACTO_SUCESORIO: 'Existe un pacto sucesorio.',
   DONACIONES_PREVIAS: 'Hay donaciones previas.',
+}
+function imprimirBorrador() {
+  const nodo = document.querySelector('[data-testid="borrador"]')
+  if (!nodo) return
+  const ventana = window.open('', '_blank', 'noopener,noreferrer')
+  if (!ventana) return
+  ventana.document.write(`<!doctype html><html lang="es"><head><title>Borrador de testamento</title><style>body{font-family:Georgia,serif;max-width:42rem;margin:2rem auto;color:#1d1a16;line-height:1.55}h3{font-size:1.15rem;margin:1.3rem 0 .35rem}p{margin:.35rem 0}.no-imprimir{display:none}</style></head><body>${nodo.innerHTML}</body></html>`)
+  ventana.document.close()
+  ventana.focus()
+  ventana.print()
 }
 async function enviar() {
   if (!contacto.value.consentimiento_rgpd) return
@@ -156,6 +168,17 @@ async function enviar() {
         <input v-model="store.input.nombreAlbacea" data-testid="albacea-nombre" autocomplete="name">
       </label>
     </fieldset>
+
+    <article v-if="borrador" class="borrador" data-testid="borrador">
+      <p class="kicker">Borrador para el notario</p>
+      <h3>Testamento abierto</h3>
+      <p class="nota">{{ TEXTOS_LEGALES.avisoBorrador }}</p>
+      <section v-for="clausula in borrador" :key="clausula.titulo">
+        <h3>{{ clausula.titulo }}</h3>
+        <p v-for="(parrafo, indice) in clausula.parrafos" :key="indice">{{ parrafo }}</p>
+      </section>
+      <button type="button" class="secundario no-imprimir" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
+    </article>
 
     <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar">
       <h3>{{ store.resultado.estado === 'revision_obligatoria' ? 'Solicita una revisión' : 'Revisa el resultado con el despacho' }}</h3>

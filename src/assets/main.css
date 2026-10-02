@@ -291,6 +291,10 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .avisos { list-style-position: inside; }
 .diferencias { margin-top: 1.4rem; }
 .diferencias p { max-width: none; padding: .55rem 0; border-bottom: 1px solid var(--linea); }
+.borrador { margin-top: 1.6rem; padding: 1.3rem 1.2rem 1.4rem; border: 1px solid var(--linea); background: #fffaf0; }
+.borrador h3 { margin-top: 1.1rem; font-size: 1.15rem; }
+.borrador .kicker + h3 { margin-top: .2rem; }
+.borrador p { max-width: 68ch; }
 .lead { display: grid; gap: .7rem; max-width: 36rem; margin-top: 2rem; padding: 1.2rem; border: 1px solid var(--linea); background: #fffaf0; }
 .lead h3 { margin-top: 0; }
 
