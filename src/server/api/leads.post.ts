@@ -4,7 +4,7 @@ import { getRepositories, TENANT_DEMO_ID } from '../repositories'
 import { leadBodySchema } from '../schemas/lead'
 
 const CUBO_GRABACIONES = 'grabaciones-express'
-const TAMANO_MAXIMO = 8 * 1024 * 1024
+const TAMANO_MAXIMO = 20 * 1024 * 1024
 
 export default defineEventHandler(async (event) => {
   const { json, grabacion } = await leerSolicitud(event)
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   let grabacionUrl: string | null = null
   let grabacionKey: string | null = null
-  if (grabacion && grabacion.data.byteLength > 0 && body.data.citaExpress) {
+  if (grabacion && grabacion.data.byteLength > 0 && (body.data.citaExpress || body.data.urgente)) {
     const subida = await subirGrabacion(grabacion)
     grabacionUrl = subida.url
     grabacionKey = subida.key
@@ -33,8 +33,11 @@ export default defineEventHandler(async (event) => {
       contacto: body.data.contacto,
       input: body.data.input,
       resultado: calcularSucesion(body.data.input),
-      citaExpress: body.data.citaExpress,
+      citaExpress: body.data.citaExpress || body.data.urgente,
       notaExpress: body.data.notaExpress,
+      urgente: body.data.urgente,
+      motivoUrgencia: body.data.motivoUrgencia,
+      textoUrgencia: body.data.textoUrgencia,
       grabacionUrl,
       grabacionKey,
     })

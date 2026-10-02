@@ -405,6 +405,28 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .grabacion-express { display: grid; gap: .7rem; }
 .acciones-grabacion { display: flex; flex-wrap: wrap; gap: .5rem; }
 .video-express { width: 100%; max-height: 16rem; background: #111; }
+.guion-lectura {
+  max-height: 14rem;
+  overflow: auto;
+  padding: .9rem 1rem;
+  border: 1px solid var(--linea);
+  border-radius: .5rem;
+  background: #fff;
+}
+.guion-lectura p { margin: .35rem 0 0; max-width: none; }
+.testamento-urgencia {
+  display: grid;
+  gap: .75rem;
+  max-width: 36rem;
+  margin-top: 1.8rem;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, #9a3412 35%, var(--linea));
+  border-radius: .7rem;
+  background: color-mix(in srgb, #9a3412 7%, white);
+}
+.testamento-urgencia h3 { margin-top: .1rem; }
+.testamento-urgencia ol { margin: 0; padding-left: 1.2rem; }
+.testamento-urgencia li { margin: .35rem 0; }
 .guardar-simulacion {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, .8fr);

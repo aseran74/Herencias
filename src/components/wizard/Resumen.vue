@@ -5,6 +5,7 @@ import { guardarPendiente } from '../../composables/useGuardadoPendiente'
 import { useSimulaciones } from '../../composables/useSimulaciones'
 import { TEXTOS_LEGALES } from '../../content/legal'
 import { redactarBorrador } from '../../content/borrador'
+import { redactarGuionUrgencia } from '../../content/guionUrgencia'
 import Albacea from './Albacea.vue'
 import GrabacionExpress from './GrabacionExpress.vue'
 import { COMUNIDADES_ISD, estimarIsd } from '../../domain/succession'
@@ -15,9 +16,14 @@ const auth = useAuthStore()
 const contacto = ref({ nombre: '', email: '', telefono: '', consentimiento_rgpd: false })
 const tituloSimulacion = ref('Herencia familiar')
 const notaExpress = ref('')
+const lugarUrgencia = ref('')
+const peligroMuerte = ref(false)
 const grabacion = ref<Blob | null>(null)
+const grabacionUrgencia = ref<Blob | null>(null)
 const enviandoExpress = ref(false)
+const enviandoUrgencia = ref(false)
 const estadoExpress = ref<'reposo' | 'exito' | 'error'>('reposo')
+const estadoUrgencia = ref<'reposo' | 'exito' | 'error'>('reposo')
 const guardando = ref(false)
 const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
@@ -28,6 +34,9 @@ const receptoresLibre = computed(() =>
 )
 const estimacion = computed(() => estimarIsd(store.input, store.resultado))
 const borrador = computed(() => redactarBorrador(store.input, store.resultado, contacto.value.nombre))
+const guionUrgencia = computed(() =>
+  redactarGuionUrgencia(store.input, store.resultado, contacto.value.nombre, lugarUrgencia.value),
+)
 const albaceaLista = computed(() => {
   if (store.input.quiereAlbacea === null) return false
   return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length > 0
@@ -35,7 +44,7 @@ const albaceaLista = computed(() => {
 const etiquetasError: Record<string, string> = {
   CAUDAL_NO_POSITIVO: 'El caudal no es positivo.',
   SIN_HIJOS: 'No hay estirpes para repartir.',
-  SIN_HEREDEROS: 'Añade al menos un sobrino, nieto o familiar cercano.',
+  SIN_HEREDEROS: 'Añade al menos un sobrino, nieto, familiar cercano u ONG.',
   MEJORA_BPS_NO_SUMA_100: 'La mejora no suma 100 %.',
   LIBRE_BPS_NO_SUMA_100: 'La libre disposición no suma 100 %.',
   MEJORA_SOLO_DESCENDIENTES: 'La mejora solo puede asignarse a descendientes.',
@@ -69,35 +78,54 @@ function imprimirBorrador() {
   ventana.focus()
   ventana.print()
 }
-async function enviar(citaExpress = false) {
+async function copiarGuion() {
+  try {
+    await navigator.clipboard.writeText(guionUrgencia.value)
+  } catch {
+    estadoUrgencia.value = 'error'
+  }
+}
+
+async function enviar(citaExpress = false, urgente = false) {
   if (!contacto.value.consentimiento_rgpd) return
-  enviando.value = !citaExpress
-  enviandoExpress.value = citaExpress
+  enviando.value = !citaExpress && !urgente
+  enviandoExpress.value = citaExpress && !urgente
+  enviandoUrgencia.value = urgente
   estadoEnvio.value = 'reposo'
   estadoExpress.value = 'reposo'
+  estadoUrgencia.value = 'reposo'
   try {
     const payload = {
       input: store.input,
       contacto: contacto.value,
-      citaExpress,
-      notaExpress: citaExpress ? notaExpress.value : '',
+      citaExpress: citaExpress || urgente,
+      notaExpress: urgente ? '' : (citaExpress ? notaExpress.value : ''),
+      urgente,
+      motivoUrgencia: urgente
+        ? [peligroMuerte.value ? 'Peligro de muerte' : 'Urgencia en el extranjero', lugarUrgencia.value.trim()].filter(Boolean).join('. ')
+        : '',
+      textoUrgencia: urgente ? guionUrgencia.value : '',
     }
-    if (citaExpress && grabacion.value) {
+    const video = urgente ? grabacionUrgencia.value : grabacion.value
+    if ((citaExpress || urgente) && video) {
       const cuerpo = new FormData()
       cuerpo.append('payload', JSON.stringify(payload))
-      cuerpo.append('grabacion', grabacion.value, 'mensaje.webm')
+      cuerpo.append('grabacion', video, urgente ? 'urgencia.webm' : 'mensaje.webm')
       await $fetch('/api/leads', { method: 'POST', body: cuerpo })
     } else {
       await $fetch('/api/leads', { method: 'POST', body: payload })
     }
-    if (citaExpress) estadoExpress.value = 'exito'
+    if (urgente) estadoUrgencia.value = 'exito'
+    else if (citaExpress) estadoExpress.value = 'exito'
     else estadoEnvio.value = 'exito'
   } catch {
-    if (citaExpress) estadoExpress.value = 'error'
+    if (urgente) estadoUrgencia.value = 'error'
+    else if (citaExpress) estadoExpress.value = 'error'
     else estadoEnvio.value = 'error'
   } finally {
     enviando.value = false
     enviandoExpress.value = false
+    enviandoUrgencia.value = false
   }
 }
 
@@ -282,6 +310,47 @@ async function guardarSimulacion() {
       </section>
       <button type="button" class="secundario no-imprimir" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
     </article>
+
+    <section class="testamento-urgencia" aria-labelledby="titulo-urgencia" data-testid="testamento-urgencia">
+      <p class="kicker">Urgencia vital</p>
+      <h3 id="titulo-urgencia">Testamento express de urgencia</h3>
+      <p>{{ TEXTOS_LEGALES.avisoUrgencia }}</p>
+      <p><strong>Si estás fuera de España y temes no llegar al notario, haz esto ahora:</strong></p>
+      <ol>
+        <li>Llama o escribe al consulado o sección consular de España en el país donde estás. El cónsul puede autorizar el testamento.</li>
+        <li>Si hay peligro de muerte y no hay cónsul a tiempo, el Código Civil permite un testamento ante cinco testigos (art. 700 CC).</li>
+        <li>Si puedes escribir, copia el texto de tu puño y letra, pon la fecha y fírmalo. Eso puede ser un testamento ológrafo (art. 688 CC).</li>
+        <li>Graba el vídeo leyendo el texto. El despacho lo recibe como prueba de tu voluntad y actúa de inmediato. El vídeo solo no otorga testamento.</li>
+      </ol>
+      <label>
+        Dónde estás ahora
+        <input v-model="lugarUrgencia" data-testid="lugar-urgencia" maxlength="200" placeholder="Por ejemplo: hospital en Hanói, Vietnam">
+      </label>
+      <label class="check">
+        <input v-model="peligroMuerte" data-testid="peligro-muerte" type="checkbox">
+        Temo morir en días y no llegar a un notario o cónsul español
+      </label>
+      <GrabacionExpress
+        v-model="grabacionUrgencia"
+        :guion="guionUrgencia"
+        :tope="120"
+        nota="Lee el texto en voz alta, mirando a cámara. Tienes hasta 2 minutos. El vídeo es prueba, no escritura."
+      />
+      <div class="acciones-grabacion">
+        <button type="button" class="secundario" data-testid="copiar-guion" @click="copiarGuion">Copiar texto para escribirlo a mano</button>
+      </div>
+      <button
+        type="button"
+        data-testid="urgencia-enviar"
+        :disabled="enviandoUrgencia || !contacto.consentimiento_rgpd"
+        @click="enviar(true, true)"
+      >
+        {{ enviandoUrgencia ? 'Enviando…' : 'Enviar urgencia vital al despacho' }}
+      </button>
+      <p class="nota">Marca el consentimiento del formulario de contacto, más abajo, antes de enviar.</p>
+      <p v-if="estadoUrgencia === 'exito'" class="exito" role="status">Urgencia enviada. El despacho intentará localizarte de inmediato. Si puedes, contacta también con el consulado español.</p>
+      <p v-if="estadoUrgencia === 'error'" class="alerta" role="alert">No se pudo enviar la urgencia. Inténtalo de nuevo o llama al despacho.</p>
+    </section>
 
     <section class="cita-express" aria-labelledby="titulo-express" data-testid="cita-express">
       <p class="kicker">Notario</p>

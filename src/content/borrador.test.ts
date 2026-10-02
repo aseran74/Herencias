@@ -17,7 +17,7 @@ function entrada(extra: Partial<Input> = {}): Input {
       { id: 'clara', nombre: 'Clara', vive: true, descendientes: [] },
     ],
     tieneHijos: true,
-    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false },
+    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -62,7 +62,7 @@ describe('borrador notarial', () => {
     const input = entrada({
       tieneHijos: false,
       hijos: [],
-      destinosColaterales: { sobrinos: true, nietos: false, familiarCercano: false },
+      destinosColaterales: { sobrinos: true, nietos: false, familiarCercano: false, ong: false },
       beneficiariosLibre: [
         { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
         { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
@@ -77,6 +77,21 @@ describe('borrador notarial', () => {
     expect(texto).toContain('Elena')
     expect(texto).toContain('libre disposición')
     expect(texto).not.toContain('herederos legitimarios')
+  })
+
+  it('instituye a una ONG cuando no hay descendientes', () => {
+    const input = entrada({
+      tieneHijos: false,
+      hijos: [],
+      destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: true },
+      beneficiariosLibre: [
+        { id: 'ong', nombre: 'Cruz Roja', tipo: 'entidad', parentesco: 'ajeno', rol: 'ong' },
+      ],
+      atribucionEstricta: { tipo: null, inmuebleId: null },
+    })
+    const texto = redactarBorrador(input, calcularSucesion(input), 'Pedro Gil')?.flatMap(clausula => clausula.parrafos).join(' ')
+    expect(texto).toContain('Cruz Roja')
+    expect(texto).toContain('ONG')
   })
 
   it('no redacta un caso que exige revisión', () => {

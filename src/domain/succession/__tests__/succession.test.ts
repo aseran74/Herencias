@@ -29,7 +29,7 @@ function inputBase(caudalCent = 2_100_000 * EUR): Input {
     donaciones: [],
     hijos: [hijo('a'), hijo('b'), hijo('c')],
     tieneHijos: true,
-    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false },
+    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -379,7 +379,7 @@ describe('núcleo sucesorio', () => {
     const input = inputBase()
     input.tieneHijos = false
     input.hijos = []
-    input.destinosColaterales = { sobrinos: true, nietos: false, familiarCercano: false }
+    input.destinosColaterales = { sobrinos: true, nietos: false, familiarCercano: false, ong: false }
     input.beneficiariosLibre = [
       { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
       { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
@@ -397,5 +397,21 @@ describe('núcleo sucesorio', () => {
     expect(herederos.get('s2')?.totalCent).toBe(70_000_000)
     expect(herederos.get('s3')?.totalCent).toBe(70_000_000)
     expect(resultado.avisos).toContain('SIN_DESCENDIENTES_LIBRE_TOTAL')
+  })
+
+  it('reparte todo el caudal a una ONG si el soltero no tiene hijos', () => {
+    const input = inputBase()
+    input.tieneHijos = false
+    input.hijos = []
+    input.destinosColaterales = { sobrinos: false, nietos: false, familiarCercano: false, ong: true }
+    input.beneficiariosLibre = [
+      { id: 'ong', nombre: 'Cruz Roja', tipo: 'entidad', parentesco: 'ajeno', rol: 'ong' },
+    ]
+
+    const { resultado, herederos } = porId(input)
+
+    expect(resultado.tercios?.libreCent).toBe(2_100_000 * EUR)
+    expect(herederos.get('ong')?.totalCent).toBe(2_100_000 * EUR)
+    expect(herederos.get('ong')?.estrictaCent).toBe(0)
   })
 })

@@ -11,6 +11,9 @@ export interface Lead {
   resultado: Resultado
   citaExpress: boolean
   notaExpress: string
+  urgente: boolean
+  motivoUrgencia: string
+  textoUrgencia: string
   grabacionUrl: string | null
   grabacionKey: string | null
 }
@@ -22,6 +25,9 @@ export interface LeadNuevo {
   resultado: Resultado
   citaExpress?: boolean
   notaExpress?: string
+  urgente?: boolean
+  motivoUrgencia?: string
+  textoUrgencia?: string
   grabacionUrl?: string | null
   grabacionKey?: string | null
 }

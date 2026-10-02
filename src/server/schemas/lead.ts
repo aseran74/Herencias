@@ -15,6 +15,9 @@ export const leadBodySchema = z.object({
   contacto: contactoLeadSchema,
   citaExpress: z.boolean().optional().default(false),
   notaExpress: z.string().trim().max(1000).optional().default(''),
+  urgente: z.boolean().optional().default(false),
+  motivoUrgencia: z.string().trim().max(500).optional().default(''),
+  textoUrgencia: z.string().trim().max(8000).optional().default(''),
 })
 
 export type ContactoLead = z.infer<typeof contactoLeadSchema>

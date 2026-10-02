@@ -10,7 +10,7 @@
       </p>
       <p>
         No se guarda información durante el recorrido. El nombre, correo, teléfono,
-        respuestas, resultado y, si la hay, la grabación express se envían solo al
+        respuestas, resultado y, si la hay, la grabación express o de urgencia se envían solo al
         confirmar el formulario con el consentimiento marcado.
       </p>
       <p class="aviso">

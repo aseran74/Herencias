@@ -115,13 +115,13 @@ function elegirHijos(tiene: boolean) {
     <fieldset v-if="store.input.situacionConyugal === 'soltero' && store.input.tieneHijos !== null" class="opciones">
       <legend>
         {{ store.input.tieneHijos
-          ? 'Además, ¿quieres dejar la libre disposición a alguna de estas personas?'
+          ? 'Además, ¿quieres dejar la libre disposición a alguna de estas personas o entidades?'
           : '¿A quién quieres dejar todo el patrimonio?' }}
       </legend>
       <p class="nota">
         {{ store.input.tieneHijos
-          ? 'Los hijos conservan su legítima. Aquí solo indicas si parte libre va a sobrinos, nietos u otro familiar.'
-          : 'Sin hijos, el caudal se trata como libre disposición. Puedes dejarlo a los tres sobrinos, a nietos o a un familiar cercano. Si viven los padres, el notario revisará su legítima.' }}
+          ? 'Los hijos conservan su legítima. Aquí solo indicas si parte libre va a sobrinos, nietos, un familiar o una ONG.'
+          : 'Sin hijos, el caudal se trata como libre disposición. Puedes dejarlo a sobrinos, nietos, un familiar cercano o una ONG. Si viven los padres, el notario revisará su legítima.' }}
       </p>
       <label class="opcion">
         <input
@@ -149,6 +149,15 @@ function elegirHijos(tiene: boolean) {
           @change="store.input.destinosColaterales.familiarCercano = ($event.target as HTMLInputElement).checked"
         >
         Familiar cercano
+      </label>
+      <label class="opcion">
+        <input
+          :checked="store.input.destinosColaterales.ong"
+          data-testid="destino-ong"
+          type="checkbox"
+          @change="store.input.destinosColaterales.ong = ($event.target as HTMLInputElement).checked"
+        >
+        ONG
       </label>
     </fieldset>
     <fieldset v-if="store.input.situacionConyugal === 'conyuge_vivo'" class="opciones">

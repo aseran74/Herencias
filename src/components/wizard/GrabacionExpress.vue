@@ -2,12 +2,21 @@
 import { nextTick, onUnmounted, ref } from 'vue'
 
 const grabacion = defineModel<Blob | null>({ default: null })
+const props = withDefaults(defineProps<{
+  tope?: number
+  guion?: string
+  nota?: string
+}>(), {
+  tope: 30,
+  guion: '',
+  nota: 'El vídeo es opcional y dura como máximo 30 segundos. Di quién hereda y si quieres firmar pronto.',
+})
+
 const error = ref('')
 const grabando = ref(false)
 const previsualizacion = ref('')
 const visor = ref<HTMLVideoElement | null>(null)
 const segundos = ref(0)
-const tope = 30
 
 let media: MediaRecorder | null = null
 let camara: MediaStream | null = null
@@ -35,12 +44,12 @@ async function empezar() {
     if (visor.value) visor.value.srcObject = camara
     temporizador = setInterval(() => {
       segundos.value += 1
-      if (segundos.value >= tope) parar()
+      if (segundos.value >= props.tope) parar()
     }, 1000)
     media.start()
   } catch {
     detenerCamara()
-    error.value = 'No se pudo abrir la cámara. Puedes pedir la cita express sin vídeo.'
+    error.value = 'No se pudo abrir la cámara. Puedes enviar el texto sin vídeo.'
   }
 }
 
@@ -76,10 +85,14 @@ function detenerCamara() {
 
 <template>
   <div class="grabacion-express" data-testid="grabacion-express">
-    <p class="nota">El vídeo es opcional y dura como máximo {{ tope }} segundos. Di quién hereda y si quieres firmar pronto.</p>
+    <p class="nota">{{ nota }}</p>
+    <div v-if="guion" class="guion-lectura" data-testid="guion-lectura">
+      <p class="kicker">Texto para leer en voz alta</p>
+      <p>{{ guion }}</p>
+    </div>
     <div class="acciones-grabacion">
       <button v-if="!grabando && !grabacion" type="button" data-testid="grabar-express" @click="empezar">
-        Grabar mensaje
+        {{ guion ? 'Grabar leyendo el texto' : 'Grabar mensaje' }}
       </button>
       <button v-else-if="grabando" type="button" class="secundario" data-testid="parar-express" @click="parar">
         Parar ({{ segundos }}s / {{ tope }}s)

@@ -50,7 +50,7 @@ function anadir() {
     <label class="interruptor"><input v-model="personalizada" type="checkbox"> Quiero elegir destinatarios o porcentajes</label>
     <p v-if="!personalizada" class="nota">
       {{ store.sinDescendientes
-        ? 'Sin porcentajes propios: se reparte por igual entre las personas que hayas nombrado. Si son tres sobrinos, cada uno recibe un tercio.'
+        ? 'Sin porcentajes propios: se reparte por igual entre las personas o entidades que hayas nombrado.'
         : 'Sin disposición: se reparte por estirpes.' }}
     </p>
     <template v-else>

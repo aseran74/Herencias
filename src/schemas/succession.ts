@@ -47,13 +47,14 @@ export const inputSucesionSchema = z.object({
     sobrinos: z.boolean(),
     nietos: z.boolean(),
     familiarCercano: z.boolean(),
-  }).default({ sobrinos: false, nietos: false, familiarCercano: false }),
+    ong: z.boolean().default(false),
+  }).default({ sobrinos: false, nietos: false, familiarCercano: false, ong: false }),
   beneficiariosLibre: z.array(z.object({
     id,
     nombre: z.string().trim().min(1).max(160),
     tipo: z.enum(['persona', 'entidad']),
     parentesco: z.enum(['descendiente', 'cercano', 'ajeno']).optional(),
-    rol: z.enum(['sobrino', 'nieto', 'familiar_cercano']).optional(),
+    rol: z.enum(['sobrino', 'nieto', 'familiar_cercano', 'ong']).optional(),
   })).max(30),
   conyugeViudo: z.boolean(),
   disposiciones: z.object({

@@ -67,7 +67,8 @@ function calidadColateral(persona: Input['beneficiariosLibre'][number]): string 
   if (persona.rol === 'familiar_cercano') return 'familiar cercano'
   if (persona.parentesco === 'cercano') return 'familiar cercano'
   if (persona.parentesco === 'descendiente') return 'descendiente'
-  return persona.tipo === 'entidad' ? 'entidad' : 'persona'
+  if (persona.rol === 'ong' || persona.tipo === 'entidad') return 'ONG o entidad'
+  return 'persona'
 }
 
 export function redactarBorrador(input: Input, resultado: Resultado, otorgante = ''): Clausula[] | null {

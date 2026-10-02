@@ -51,6 +51,7 @@ describe('wizard', () => {
     expect(wrapper.text()).toContain('700.000,00')
     expect(wrapper.text()).toContain('Resumen')
     expect(wrapper.get('[data-testid="cita-express"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="testamento-urgencia"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Pedir cita express')
   })
 
@@ -128,6 +129,7 @@ describe('wizard', () => {
 
     await wrapper.get('input[value="soltero"]').setValue()
     await wrapper.get('[data-testid="tiene-hijos-no"]').setValue()
+    expect(wrapper.get('[data-testid="destino-ong"]').exists()).toBe(true)
     await wrapper.get('[data-testid="destino-sobrinos"]').setValue(true)
     await wrapper.get('[data-testid="continuar"]').trigger('click')
     await wrapper.get('[data-testid="anadir-inmueble"]').trigger('click')

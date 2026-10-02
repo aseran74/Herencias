@@ -16,6 +16,9 @@ interface FilaLead {
   resultado_json: Resultado
   cita_express: boolean
   nota_express: string
+  urgente: boolean
+  motivo_urgencia: string
+  texto_urgencia: string
   grabacion_url: string | null
   grabacion_key: string | null
 }
@@ -54,11 +57,14 @@ class InsforgeLeadRepository implements LeadRepository {
           resultado_json: lead.resultado,
           cita_express: lead.citaExpress ?? false,
           nota_express: lead.notaExpress ?? '',
+          urgente: lead.urgente ?? false,
+          motivo_urgencia: lead.motivoUrgencia ?? '',
+          texto_urgencia: lead.textoUrgencia ?? '',
           grabacion_url: lead.grabacionUrl ?? null,
           grabacion_key: lead.grabacionKey ?? null,
         },
       ])
-      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, grabacion_url, grabacion_key')
+      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key')
       .limit(1)
 
     const fila = primeraFila<FilaLead>(data)
@@ -69,7 +75,7 @@ class InsforgeLeadRepository implements LeadRepository {
   async findById(tenantId: string, id: string): Promise<Lead | null> {
     const { data, error } = await this.cliente.database
       .from('leads')
-      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, grabacion_url, grabacion_key')
+      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key')
       .eq('id', id)
       .eq('despacho_id', tenantId)
       .limit(1)
@@ -112,6 +118,9 @@ function aLead(fila: FilaLead): Lead {
     resultado: fila.resultado_json,
     citaExpress: Boolean(fila.cita_express),
     notaExpress: fila.nota_express ?? '',
+    urgente: Boolean(fila.urgente),
+    motivoUrgencia: fila.motivo_urgencia ?? '',
+    textoUrgencia: fila.texto_urgencia ?? '',
     grabacionUrl: fila.grabacion_url ?? null,
     grabacionKey: fila.grabacion_key ?? null,
   }
