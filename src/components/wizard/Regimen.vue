@@ -120,9 +120,18 @@ function elegirHijos(tiene: boolean) {
       </legend>
       <p class="nota">
         {{ store.input.tieneHijos
-          ? 'Los hijos conservan su legítima. Aquí solo indicas si parte libre va a sobrinos, nietos, un familiar o una ONG.'
-          : 'Sin hijos, el caudal se trata como libre disposición. Puedes dejarlo a sobrinos, nietos, un familiar cercano o una ONG. Si viven los padres, el notario revisará su legítima.' }}
+          ? 'Los hijos conservan su legítima. Aquí solo indicas si parte libre va a hermanos, sobrinos, nietos, un familiar o una ONG.'
+          : 'Sin hijos, el caudal se trata como libre disposición. Puedes dejarlo a hermanos, sobrinos, nietos, un familiar cercano o una ONG. Si viven los padres, el notario revisará su legítima.' }}
       </p>
+      <label class="opcion">
+        <input
+          :checked="store.input.destinosColaterales.hermanos"
+          data-testid="destino-hermanos"
+          type="checkbox"
+          @change="store.input.destinosColaterales.hermanos = ($event.target as HTMLInputElement).checked"
+        >
+        Hermanos
+      </label>
       <label class="opcion">
         <input
           :checked="store.input.destinosColaterales.sobrinos"

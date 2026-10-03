@@ -12,7 +12,7 @@ const input: Input = {
   donaciones: [],
   hijos: [],
   tieneHijos: false,
-  destinosColaterales: { sobrinos: true, nietos: false, familiarCercano: false, ong: false },
+  destinosColaterales: { hermanos: false, sobrinos: true, nietos: false, familiarCercano: false, ong: false },
   beneficiariosLibre: [
     { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
     { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },

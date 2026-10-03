@@ -70,12 +70,13 @@ export const useWizardStore = defineStore('succession-wizard', () => {
         if (input.value.tieneHijos === null) return ['Indica si el causante tiene hijos.']
         if (
           input.value.tieneHijos === false
+          && !input.value.destinosColaterales.hermanos
           && !input.value.destinosColaterales.sobrinos
           && !input.value.destinosColaterales.nietos
           && !input.value.destinosColaterales.familiarCercano
           && !input.value.destinosColaterales.ong
         ) {
-          return ['Indica si quieres dejar el patrimonio a sobrinos, nietos, un familiar cercano o una ONG.']
+          return ['Indica si quieres dejar el patrimonio a hermanos, sobrinos, nietos, un familiar cercano o una ONG.']
         }
       }
       return []
@@ -92,7 +93,7 @@ export const useWizardStore = defineStore('succession-wizard', () => {
       if (input.value.situacionConyugal === 'soltero' && input.value.tieneHijos === false) {
         return input.value.beneficiariosLibre.some(persona => persona.nombre.trim())
           ? []
-          : ['Añade al menos un sobrino, nieto, familiar cercano u ONG.']
+          : ['Añade al menos un hermano, sobrino, nieto, familiar cercano u ONG.']
       }
       return descendientes.value.length ? [] : ['Añade un hijo vivo o nietos de un hijo premuerto.']
     }

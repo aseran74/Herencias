@@ -129,6 +129,7 @@ describe('wizard', () => {
 
     await wrapper.get('input[value="soltero"]').setValue()
     await wrapper.get('[data-testid="tiene-hijos-no"]').setValue()
+    expect(wrapper.get('[data-testid="destino-hermanos"]').exists()).toBe(true)
     expect(wrapper.get('[data-testid="destino-ong"]').exists()).toBe(true)
     await wrapper.get('[data-testid="destino-sobrinos"]').setValue(true)
     await wrapper.get('[data-testid="continuar"]').trigger('click')

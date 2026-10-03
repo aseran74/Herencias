@@ -44,7 +44,7 @@ const albaceaLista = computed(() => {
 const etiquetasError: Record<string, string> = {
   CAUDAL_NO_POSITIVO: 'El caudal no es positivo.',
   SIN_HIJOS: 'No hay estirpes para repartir.',
-  SIN_HEREDEROS: 'Añade al menos un sobrino, nieto, familiar cercano u ONG.',
+  SIN_HEREDEROS: 'Añade al menos un hermano, sobrino, nieto, familiar cercano u ONG.',
   MEJORA_BPS_NO_SUMA_100: 'La mejora no suma 100 %.',
   LIBRE_BPS_NO_SUMA_100: 'La libre disposición no suma 100 %.',
   MEJORA_SOLO_DESCENDIENTES: 'La mejora solo puede asignarse a descendientes.',

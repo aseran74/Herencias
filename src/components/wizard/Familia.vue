@@ -5,6 +5,7 @@ import { useWizardStore } from '../../stores/wizard'
 
 const store = useWizardStore()
 const etiquetas: Record<RolColateral, { titulo: string; boton: string; testid: string }> = {
+  hermano: { titulo: 'Hermano/a', boton: '+ Añadir hermano/a', testid: 'anadir-hermano' },
   sobrino: { titulo: 'Sobrino/a', boton: '+ Añadir sobrino/a', testid: 'anadir-sobrino' },
   nieto: { titulo: 'Nieto/a', boton: '+ Añadir nieto/a', testid: 'anadir-nieto-libre' },
   familiar_cercano: { titulo: 'Familiar cercano', boton: '+ Añadir familiar', testid: 'anadir-familiar' },
@@ -39,6 +40,7 @@ function quitarColateral(indice: number) {
 
 onMounted(() => {
   const roles: RolColateral[] = []
+  if (store.input.destinosColaterales.hermanos) roles.push('hermano')
   if (store.input.destinosColaterales.sobrinos) roles.push('sobrino')
   if (store.input.destinosColaterales.nietos) roles.push('nieto')
   if (store.input.destinosColaterales.familiarCercano) roles.push('familiar_cercano')
@@ -48,14 +50,16 @@ onMounted(() => {
   }
 })
 
+const mostrarHermanos = () => store.input.destinosColaterales.hermanos
 const mostrarSobrinos = () => store.input.destinosColaterales.sobrinos
 const mostrarNietos = () => store.input.destinosColaterales.nietos
 const mostrarFamiliar = () => store.input.destinosColaterales.familiarCercano
 const mostrarOng = () => store.input.destinosColaterales.ong
-const hayDestinos = () => mostrarSobrinos() || mostrarNietos() || mostrarFamiliar() || mostrarOng()
+const hayDestinos = () => mostrarHermanos() || mostrarSobrinos() || mostrarNietos() || mostrarFamiliar() || mostrarOng()
 const rolesActivos = () =>
-  (['sobrino', 'nieto', 'familiar_cercano', 'ong'] as const).filter(rol =>
-    (rol === 'sobrino' && mostrarSobrinos())
+  (['hermano', 'sobrino', 'nieto', 'familiar_cercano', 'ong'] as const).filter(rol =>
+    (rol === 'hermano' && mostrarHermanos())
+    || (rol === 'sobrino' && mostrarSobrinos())
     || (rol === 'nieto' && mostrarNietos())
     || (rol === 'familiar_cercano' && mostrarFamiliar())
     || (rol === 'ong' && mostrarOng()),

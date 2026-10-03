@@ -7,7 +7,7 @@
 
 Wizard web de reparto orientativo y captación de leads. No sustituye asesoramiento jurídico.
 
-Incluye en v1: régimen común, causante con descendientes o soltero sin hijos que instituye a sobrinos, nietos, un familiar cercano o una ONG, caudal, tercios cuando hay descendientes, estirpes, disposiciones, adjudicación de inmuebles, diferencias, detección de revisión obligatoria, estimación orientativa del impuesto de sucesiones según la comunidad de residencia habitual y la pregunta de si se nombra albacea.
+Incluye en v1: régimen común, causante con descendientes o soltero sin hijos que instituye a hermanos, sobrinos, nietos, un familiar cercano o una ONG, caudal, tercios cuando hay descendientes, estirpes, disposiciones, adjudicación de inmuebles, diferencias, detección de revisión obligatoria, estimación orientativa del impuesto de sucesiones según la comunidad de residencia habitual y la pregunta de si se nombra albacea.
 
 Fuera de v1: derecho foral, cálculo de la legítima de ascendientes, cónyuge sin hijos, valoración del usufructo viudal, desheredación, colación detallada, empresa familiar y bienes extranjeros. La estimación del ISD no sustituye la liquidación: omite vivienda habitual, discapacidad, patrimonio preexistente y edad.
 
@@ -25,7 +25,7 @@ Fuera de v1: derecho foral, cálculo de la legítima de ascendientes, cónyuge s
 - **R10 (art. 1392 CC):** en bienes gananciales, la mitad neta del cónyuge queda fuera de la herencia y solo la mitad del causante integra el caudal. Los bienes pueden marcarse como gananciales, privativos u otra titularidad.
 - **R11 (arts. 841 ss., 1062 CC):** compensación por indivisibilidad solo informativa.
 - **R12:** aplica la vecindad civil, no la residencia.
-- **R13:** si el causante no tiene descendientes, no hay estricta ni mejora: el caudal se atribuye por libre disposición a las personas o entidades instituidas (sobrinos, nietos, familiar cercano u ONG). Se avisa de que los ascendientes vivos pueden tener legítima; v1 no la calcula.
+- **R13:** si el causante no tiene descendientes, no hay estricta ni mejora: el caudal se atribuye por libre disposición a las personas o entidades instituidas (hermanos, sobrinos, nietos, familiar cercano u ONG). Se avisa de que los ascendientes vivos pueden tener legítima; v1 no la calcula.
 
 ## 3. Dinero
 
@@ -104,7 +104,7 @@ export interface BeneficiarioLibre {
   nombre: string
   tipo: 'persona' | 'entidad'
   parentesco?: 'descendiente' | 'cercano' | 'ajeno'
-  rol?: 'sobrino' | 'nieto' | 'familiar_cercano' | 'ong'
+  rol?: 'hermano' | 'sobrino' | 'nieto' | 'familiar_cercano' | 'ong'
 }
 export interface Disposiciones {
   mejora: Reparto[] | null
@@ -121,7 +121,7 @@ export interface Input {
   donaciones: Donacion[]
   hijos: Hijo[]
   tieneHijos: boolean | null
-  destinosColaterales: { sobrinos: boolean; nietos: boolean; familiarCercano: boolean; ong: boolean }
+  destinosColaterales: { hermanos: boolean; sobrinos: boolean; nietos: boolean; familiarCercano: boolean; ong: boolean }
   beneficiariosLibre: BeneficiarioLibre[]
   conyugeViudo: boolean
   disposiciones: Disposiciones
@@ -176,9 +176,9 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 
 ## 8. Wizard
 
-1. Régimen: vecindad civil; situación conyugal explícita (cónyuge vivo, viudo, soltero o separado/divorciado); y régimen económico cuando hubo matrimonio. Si es soltero, indica si hay hijos y si quiere dejar a sobrinos, nietos, un familiar cercano o una ONG.
+1. Régimen: vecindad civil; situación conyugal explícita (cónyuge vivo, viudo, soltero o separado/divorciado); y régimen económico cuando hubo matrimonio. Si es soltero, indica si hay hijos y si quiere dejar a hermanos, sobrinos, nietos, un familiar cercano o una ONG.
 2. Patrimonio: inmuebles, participación, cargas, otros activos y deudas.
-3. Familia: hijos, premoriencia y descendientes; o, si el soltero no tiene hijos, los sobrinos, familiares u ONG instituidos. La situación del cónyuge ya se recoge en el paso 1.
+3. Familia: hijos, premoriencia y descendientes; o, si el soltero no tiene hijos, los hermanos, sobrinos, familiares u ONG instituidos. La situación del cónyuge ya se recoge en el paso 1.
 4. Cribado: flags sí/no.
 5. Legítima estricta: automática y visual. Opcionalmente se puede dejar un inmueble concreto o sus rentas de alquiler a los legitimarios, sin alterar el importe del tercio.
 6. Mejora: porcentajes a descendientes, suma validada en vivo.

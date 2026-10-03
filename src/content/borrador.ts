@@ -62,6 +62,7 @@ function estirpes(input: Input): string[] {
 }
 
 function calidadColateral(persona: Input['beneficiariosLibre'][number]): string {
+  if (persona.rol === 'hermano') return 'hermano'
   if (persona.rol === 'sobrino') return 'sobrino'
   if (persona.rol === 'nieto') return 'nieto'
   if (persona.rol === 'familiar_cercano') return 'familiar cercano'

@@ -29,7 +29,7 @@ function inputBase(caudalCent = 2_100_000 * EUR): Input {
     donaciones: [],
     hijos: [hijo('a'), hijo('b'), hijo('c')],
     tieneHijos: true,
-    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: false },
+    destinosColaterales: { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -379,7 +379,7 @@ describe('núcleo sucesorio', () => {
     const input = inputBase()
     input.tieneHijos = false
     input.hijos = []
-    input.destinosColaterales = { sobrinos: true, nietos: false, familiarCercano: false, ong: false }
+    input.destinosColaterales = { hermanos: false, sobrinos: true, nietos: false, familiarCercano: false, ong: false }
     input.beneficiariosLibre = [
       { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
       { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
@@ -403,7 +403,7 @@ describe('núcleo sucesorio', () => {
     const input = inputBase()
     input.tieneHijos = false
     input.hijos = []
-    input.destinosColaterales = { sobrinos: false, nietos: false, familiarCercano: false, ong: true }
+    input.destinosColaterales = { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: true }
     input.beneficiariosLibre = [
       { id: 'ong', nombre: 'Cruz Roja', tipo: 'entidad', parentesco: 'ajeno', rol: 'ong' },
     ]

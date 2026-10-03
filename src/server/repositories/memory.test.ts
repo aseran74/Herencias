@@ -12,7 +12,7 @@ const input: Input = {
   donaciones: [],
   hijos: [{ id: 'ana', nombre: 'Ana', vive: true, descendientes: [] }],
   tieneHijos: true,
-  destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: false },
+  destinosColaterales: { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: false },
   beneficiariosLibre: [],
   conyugeViudo: false,
   disposiciones: { mejora: null, libre: null },

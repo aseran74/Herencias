@@ -78,9 +78,10 @@ export interface Reparto {
   bps: number
 }
 
-export type RolColateral = 'sobrino' | 'nieto' | 'familiar_cercano' | 'ong'
+export type RolColateral = 'hermano' | 'sobrino' | 'nieto' | 'familiar_cercano' | 'ong'
 
 export interface DestinosColaterales {
+  hermanos: boolean
   sobrinos: boolean
   nietos: boolean
   familiarCercano: boolean
@@ -88,7 +89,7 @@ export interface DestinosColaterales {
 }
 
 export function destinosColateralesIniciales(): DestinosColaterales {
-  return { sobrinos: false, nietos: false, familiarCercano: false, ong: false }
+  return { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: false }
 }
 
 export interface BeneficiarioLibre {

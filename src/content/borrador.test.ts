@@ -17,7 +17,7 @@ function entrada(extra: Partial<Input> = {}): Input {
       { id: 'clara', nombre: 'Clara', vive: true, descendientes: [] },
     ],
     tieneHijos: true,
-    destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: false },
+    destinosColaterales: { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: false },
     beneficiariosLibre: [],
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
@@ -62,7 +62,7 @@ describe('borrador notarial', () => {
     const input = entrada({
       tieneHijos: false,
       hijos: [],
-      destinosColaterales: { sobrinos: true, nietos: false, familiarCercano: false, ong: false },
+      destinosColaterales: { hermanos: false, sobrinos: true, nietos: false, familiarCercano: false, ong: false },
       beneficiariosLibre: [
         { id: 's1', nombre: 'Luis', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
         { id: 's2', nombre: 'Marta', tipo: 'persona', parentesco: 'cercano', rol: 'sobrino' },
@@ -83,7 +83,7 @@ describe('borrador notarial', () => {
     const input = entrada({
       tieneHijos: false,
       hijos: [],
-      destinosColaterales: { sobrinos: false, nietos: false, familiarCercano: false, ong: true },
+      destinosColaterales: { hermanos: false, sobrinos: false, nietos: false, familiarCercano: false, ong: true },
       beneficiariosLibre: [
         { id: 'ong', nombre: 'Cruz Roja', tipo: 'entidad', parentesco: 'ajeno', rol: 'ong' },
       ],
