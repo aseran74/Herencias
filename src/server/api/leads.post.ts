@@ -2,15 +2,23 @@ import { calcularSucesion } from '../../domain/succession'
 import { createAdminClient } from '@insforge/sdk'
 import { getRepositories, TENANT_DEMO_ID } from '../repositories'
 import { leadBodySchema } from '../schemas/lead'
+import type { ZodError } from 'zod'
 
 const CUBO_GRABACIONES = 'grabaciones-express'
 const TAMANO_MAXIMO = 20 * 1024 * 1024
 
+function mensajeValidacionLead(error: ZodError) {
+  const rutas = new Set(error.issues.map(issue => issue.path.join('.')))
+  if ([...rutas].some(ruta => ruta.startsWith('contacto.'))) {
+    return 'Completa nombre, email, teléfono y el consentimiento RGPD.'
+  }
+  return 'Revisa los datos de la consulta'
+}
 export default defineEventHandler(async (event) => {
   const { json, grabacion } = await leerSolicitud(event)
   const body = leadBodySchema.safeParse(json)
   if (!body.success) {
-    throw createError({ statusCode: 400, statusMessage: 'Revisa los datos de la consulta' })
+    throw createError({ statusCode: 400, statusMessage: mensajeValidacionLead(body.error) })
   }
 
   const { leads, tenants } = getRepositories()

@@ -29,11 +29,18 @@ async function empezar() {
   error.value = ''
   borrar()
   try {
-    camara = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    camara = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: 'user' },
+      audio: true,
+    })
     const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
       ? 'video/webm;codecs=vp9,opus'
       : 'video/webm'
-    media = new MediaRecorder(camara, { mimeType: mime })
+    media = new MediaRecorder(camara, {
+      mimeType: mime,
+      videoBitsPerSecond: props.tope > 60 ? 250_000 : 400_000,
+      audioBitsPerSecond: 64_000,
+    })
     media.ondataavailable = (evento) => {
       if (evento.data.size) trozos.push(evento.data)
     }

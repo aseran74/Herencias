@@ -28,6 +28,7 @@ const guardando = ref(false)
 const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
 const estadoEnvio = ref<'reposo' | 'exito' | 'error'>('reposo')
+const errorUrgencia = ref('')
 const maximo = computed(() => Math.max(1, ...store.resultado.porHeredero.map(p => p.totalCent)))
 const receptoresLibre = computed(() =>
   store.resultado.porHeredero.filter(persona => persona.libreCent > 0),
@@ -41,6 +42,13 @@ const albaceaLista = computed(() => {
   if (store.input.quiereAlbacea === null) return false
   return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length > 0
 })
+const contactoListo = computed(() =>
+  contacto.value.nombre.trim().length >= 2
+  && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto.value.email.trim())
+  && contacto.value.telefono.trim().length >= 6
+  && contacto.value.consentimiento_rgpd,
+)
+const TAMANO_MAXIMO_VIDEO = 3.5 * 1024 * 1024
 const etiquetasError: Record<string, string> = {
   CAUDAL_NO_POSITIVO: 'El caudal no es positivo.',
   SIN_HIJOS: 'No hay estirpes para repartir.',
@@ -86,18 +94,45 @@ async function copiarGuion() {
   }
 }
 
+function mensajeErrorEnvio(error: unknown) {
+  if (error instanceof Error && error.message && !error.message.startsWith('[')) {
+    return error.message
+  }
+  if (error && typeof error === 'object' && 'statusMessage' in error && typeof error.statusMessage === 'string' && error.statusMessage) {
+    return error.statusMessage
+  }
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = error.data as { statusMessage?: string; message?: string } | undefined
+    if (data?.statusMessage) return data.statusMessage
+    if (data?.message) return data.message
+  }
+  return 'No se pudo enviar. Inténtalo de nuevo o llama al despacho.'
+}
+
 async function enviar(citaExpress = false, urgente = false) {
-  if (!contacto.value.consentimiento_rgpd) return
+  if (!contactoListo.value) {
+    if (urgente) {
+      errorUrgencia.value = 'Completa nombre, email, teléfono y el consentimiento RGPD del formulario de contacto, más abajo.'
+      estadoUrgencia.value = 'error'
+    }
+    return
+  }
   enviando.value = !citaExpress && !urgente
   enviandoExpress.value = citaExpress && !urgente
   enviandoUrgencia.value = urgente
   estadoEnvio.value = 'reposo'
   estadoExpress.value = 'reposo'
   estadoUrgencia.value = 'reposo'
+  errorUrgencia.value = ''
   try {
     const payload = {
       input: store.input,
-      contacto: contacto.value,
+      contacto: {
+        ...contacto.value,
+        nombre: contacto.value.nombre.trim(),
+        email: contacto.value.email.trim(),
+        telefono: contacto.value.telefono.trim(),
+      },
       citaExpress: citaExpress || urgente,
       notaExpress: urgente ? '' : (citaExpress ? notaExpress.value : ''),
       urgente,
@@ -107,6 +142,9 @@ async function enviar(citaExpress = false, urgente = false) {
       textoUrgencia: urgente ? guionUrgencia.value : '',
     }
     const video = urgente ? grabacionUrgencia.value : grabacion.value
+    if (video && video.size > TAMANO_MAXIMO_VIDEO) {
+      throw new Error('El vídeo es demasiado grande. Quítalo y vuelve a grabar más corto, o envía solo el texto.')
+    }
     if ((citaExpress || urgente) && video) {
       const cuerpo = new FormData()
       cuerpo.append('payload', JSON.stringify(payload))
@@ -118,8 +156,11 @@ async function enviar(citaExpress = false, urgente = false) {
     if (urgente) estadoUrgencia.value = 'exito'
     else if (citaExpress) estadoExpress.value = 'exito'
     else estadoEnvio.value = 'exito'
-  } catch {
-    if (urgente) estadoUrgencia.value = 'error'
+  } catch (error) {
+    if (urgente) {
+      errorUrgencia.value = mensajeErrorEnvio(error)
+      estadoUrgencia.value = 'error'
+    }
     else if (citaExpress) estadoExpress.value = 'error'
     else estadoEnvio.value = 'error'
   } finally {
@@ -342,14 +383,14 @@ async function guardarSimulacion() {
       <button
         type="button"
         data-testid="urgencia-enviar"
-        :disabled="enviandoUrgencia || !contacto.consentimiento_rgpd"
+        :disabled="enviandoUrgencia || !contactoListo"
         @click="enviar(true, true)"
       >
         {{ enviandoUrgencia ? 'Enviando…' : 'Enviar urgencia vital al despacho' }}
       </button>
-      <p class="nota">Marca el consentimiento del formulario de contacto, más abajo, antes de enviar.</p>
+      <p class="nota">Antes de enviar, completa nombre, email, teléfono y el consentimiento del formulario de contacto, más abajo. El vídeo es opcional.</p>
       <p v-if="estadoUrgencia === 'exito'" class="exito" role="status">Urgencia enviada. El despacho intentará localizarte de inmediato. Si puedes, contacta también con el consulado español.</p>
-      <p v-if="estadoUrgencia === 'error'" class="alerta" role="alert">No se pudo enviar la urgencia. Inténtalo de nuevo o llama al despacho.</p>
+      <p v-if="estadoUrgencia === 'error'" class="alerta" role="alert">{{ errorUrgencia || 'No se pudo enviar la urgencia. Inténtalo de nuevo o llama al despacho.' }}</p>
     </section>
 
     <section class="cita-express" aria-labelledby="titulo-express" data-testid="cita-express">
