@@ -30,6 +30,7 @@ export interface LeadNuevo {
   textoUrgencia?: string
   grabacionUrl?: string | null
   grabacionKey?: string | null
+  profesionalId?: string
 }
 
 export interface LeadRepository {

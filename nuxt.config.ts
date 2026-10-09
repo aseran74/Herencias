@@ -25,6 +25,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     insforgeUrl: process.env.INSFORGE_URL || '',
     insforgeApiKey: process.env.INSFORGE_API_KEY || '',
+    adminEmails: process.env.NUXT_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '',
     public: {
       insforgeUrl: process.env.NUXT_PUBLIC_INSFORGE_URL || process.env.INSFORGE_URL || '',
       insforgeAnonKey: process.env.NUXT_PUBLIC_INSFORGE_ANON_KEY || '',

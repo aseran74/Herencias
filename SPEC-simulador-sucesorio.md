@@ -186,17 +186,25 @@ El CTA aparece siempre; en casos bloqueantes es el único resultado.
 8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias.
 9. Impuesto: comunidad de residencia habitual del causante y coste orientativo por heredero.
 10. Albacea: sí o no; si es sí, un descendiente u otra persona, y facultades expresas sobre cuentas, pagos, deudas y conservación de bienes.
-11. Resumen: barras, impuesto, borrador orientativo de testamento abierto para el notario, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura. Opcionalmente el usuario puede grabar un mensaje breve (máximo 30 s) y pedir cita express, o enviar un testamento express de urgencia: lee en cámara un guion en primera persona (máximo 120 s) y lo manda al despacho. Ni el vídeo ni el texto son testamento; sirven como prueba de voluntad para actuar ante notario, cónsul o testamento ológrafo / en peligro de muerte.
+11. Resumen: barras, impuesto, datos del otorgante (nombre, DNI/NIE, domicilio, localidad), borrador orientativo de testamento abierto imprimible y descargable en PDF, guía abogado vs notaría con directorio, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura. Opcionalmente el usuario puede grabar un mensaje breve (máximo 30 s) y pedir cita express, o enviar un testamento express de urgencia: lee en cámara un guion en primera persona (máximo 120 s) y lo manda al despacho. Ni el vídeo ni el texto son testamento; sirven como prueba de voluntad para actuar ante notario, cónsul o testamento ológrafo / en peligro de muerte.
 
 ## 9. Leads e InsForge
 
-Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, estado_resultado, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key)`.
+Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, estado_resultado, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key, profesional_id, otorgante_dni, otorgante_domicilio, otorgante_localidad)`.
 
 - Consentimiento no premarcado con enlace a privacidad.
 - No persistir antes del envío.
 - El navegador envía a `POST /api/leads` (JSON o multipart con vídeo opcional); Nitro valida, recalcula y persiste con credencial administrativa.
 - La grabación, si existe, se guarda en el cubo privado `grabaciones-express`; se persisten `url` y `key`.
 - RLS bloquea acceso directo público a `leads`; la lectura queda reservada al despacho.
+
+### Directorio y admin
+
+- Tabla `profesionales(id, nombre, tipo[abogado|notaria], localidad, provincia, telefono, email, activo, created_at)`.
+- Semilla demo de 40 profesionales en distintas localidades españolas.
+- `GET /api/profesionales` lista activos (público vía API server).
+- Panel `/admin` (superadmin): CRUD si el email autenticado está en `NUXT_ADMIN_EMAILS`.
+- Guía UX: con errores o revisión obligatoria recomienda abogado; si el reparto está claro, notaría directa.
 
 ## 10. Perfil y simulaciones guardadas
 

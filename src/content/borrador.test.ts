@@ -47,8 +47,16 @@ function entrada(extra: Partial<Input> = {}): Input {
 describe('borrador notarial', () => {
   it('redacta el testamento con los tercios y el albacea de la simulación', () => {
     const input = entrada()
-    const texto = redactarBorrador(input, calcularSucesion(input), 'María Soler')?.flatMap(clausula => clausula.parrafos).join(' ')
+    const texto = redactarBorrador(input, calcularSucesion(input), {
+      nombre: 'María Soler',
+      dni: '12345678A',
+      domicilio: 'Calle Mayor 1',
+      localidad: 'Madrid',
+    })?.flatMap(clausula => clausula.parrafos).join(' ')
     expect(texto).toContain('María Soler')
+    expect(texto).toContain('DNI/NIE 12345678A')
+    expect(texto).toContain('Calle Mayor 1')
+    expect(texto).toContain('Madrid')
     expect(texto).toContain('Ana')
     expect(texto).toContain('33,33 %')
     expect(texto).not.toContain('€')

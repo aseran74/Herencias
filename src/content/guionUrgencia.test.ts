@@ -43,8 +43,15 @@ const input: Input = {
 
 describe('guion de urgencia', () => {
   it('redacta un texto en primera persona para leerlo en cámara', () => {
-    const texto = redactarGuionUrgencia(input, calcularSucesion(input), 'Pedro Gil', 'Hanói, Vietnam')
+    const texto = redactarGuionUrgencia(
+      input,
+      calcularSucesion(input),
+      { nombre: 'Pedro Gil', dni: '87654321B', domicilio: 'Calle Luna 2', localidad: 'Sevilla' },
+      'Hanói, Vietnam',
+    )
     expect(texto).toContain('Pedro Gil')
+    expect(texto).toContain('87654321B')
+    expect(texto).toContain('Sevilla')
     expect(texto).toContain('Hanói')
     expect(texto).toContain('Luis')
     expect(texto).toContain('no sustituyen')

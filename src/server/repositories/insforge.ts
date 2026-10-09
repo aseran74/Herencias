@@ -62,6 +62,10 @@ class InsforgeLeadRepository implements LeadRepository {
           texto_urgencia: lead.textoUrgencia ?? '',
           grabacion_url: lead.grabacionUrl ?? null,
           grabacion_key: lead.grabacionKey ?? null,
+          profesional_id: lead.profesionalId || null,
+          otorgante_dni: lead.contacto.dni ?? '',
+          otorgante_domicilio: lead.contacto.domicilio ?? '',
+          otorgante_localidad: lead.contacto.localidad ?? '',
         },
       ])
       .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key')

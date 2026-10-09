@@ -1,19 +1,29 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { centimosAEuros } from '../../composables/useSuccession'
 import { guardarPendiente } from '../../composables/useGuardadoPendiente'
 import { useSimulaciones } from '../../composables/useSimulaciones'
 import { TEXTOS_LEGALES } from '../../content/legal'
 import { redactarBorrador } from '../../content/borrador'
+import { descargarBorradorPdf } from '../../content/borradorPdf'
 import { redactarGuionUrgencia } from '../../content/guionUrgencia'
 import Albacea from './Albacea.vue'
 import GrabacionExpress from './GrabacionExpress.vue'
+import { guiaAbogadoONotaria, type Profesional } from '../../domain/profesionales'
 import { COMUNIDADES_ISD, estimarIsd } from '../../domain/succession'
 import { useAuthStore } from '../../stores/auth'
 import { useWizardStore } from '../../stores/wizard'
 const store = useWizardStore()
 const auth = useAuthStore()
-const contacto = ref({ nombre: '', email: '', telefono: '', consentimiento_rgpd: false })
+const contacto = ref({
+  nombre: '',
+  email: '',
+  telefono: '',
+  dni: '',
+  domicilio: '',
+  localidad: '',
+  consentimiento_rgpd: false,
+})
 const tituloSimulacion = ref('Herencia familiar')
 const notaExpress = ref('')
 const lugarUrgencia = ref('')
@@ -29,15 +39,48 @@ const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
 const estadoEnvio = ref<'reposo' | 'exito' | 'error'>('reposo')
 const errorUrgencia = ref('')
+const profesionales = ref<Profesional[]>([])
+const filtroProvinciaDir = ref('')
+const profesionalElegido = ref('')
 const maximo = computed(() => Math.max(1, ...store.resultado.porHeredero.map(p => p.totalCent)))
 const receptoresLibre = computed(() =>
   store.resultado.porHeredero.filter(persona => persona.libreCent > 0),
 )
 const estimacion = computed(() => estimarIsd(store.input, store.resultado))
-const borrador = computed(() => redactarBorrador(store.input, store.resultado, contacto.value.nombre))
+const datosOtorgante = computed(() => ({
+  nombre: contacto.value.nombre,
+  dni: contacto.value.dni,
+  domicilio: contacto.value.domicilio,
+  localidad: contacto.value.localidad,
+}))
+const borrador = computed(() => redactarBorrador(store.input, store.resultado, datosOtorgante.value))
 const guionUrgencia = computed(() =>
-  redactarGuionUrgencia(store.input, store.resultado, contacto.value.nombre, lugarUrgencia.value),
+  redactarGuionUrgencia(store.input, store.resultado, datosOtorgante.value, lugarUrgencia.value),
 )
+const guiaDirectorio = computed(() =>
+  guiaAbogadoONotaria(
+    store.resultado.estado,
+    store.resultado.avisos.length,
+    store.resultado.errores.length,
+  ),
+)
+const provinciasDirectorio = computed(() =>
+  [...new Set(profesionales.value.map(item => item.provincia))].sort((a, b) => a.localeCompare(b, 'es')),
+)
+const abogados = computed(() => profesionales.value.filter(item =>
+  item.tipo === 'abogado' && (!filtroProvinciaDir.value || item.provincia === filtroProvinciaDir.value),
+))
+const notarias = computed(() => profesionales.value.filter(item =>
+  item.tipo === 'notaria' && (!filtroProvinciaDir.value || item.provincia === filtroProvinciaDir.value),
+))
+
+onMounted(async () => {
+  try {
+    profesionales.value = await $fetch<Profesional[]>('/api/profesionales')
+  } catch {
+    profesionales.value = []
+  }
+})
 const albaceaLista = computed(() => {
   if (store.input.quiereAlbacea === null) return false
   return !store.input.quiereAlbacea || store.input.nombreAlbacea.trim().length > 0
@@ -86,6 +129,13 @@ function imprimirBorrador() {
   ventana.focus()
   ventana.print()
 }
+function descargarPdf() {
+  if (!borrador.value) return
+  descargarBorradorPdf(borrador.value)
+}
+function elegirAbogado(id: string) {
+  profesionalElegido.value = id
+}
 async function copiarGuion() {
   try {
     await navigator.clipboard.writeText(guionUrgencia.value)
@@ -132,6 +182,9 @@ async function enviar(citaExpress = false, urgente = false) {
         nombre: contacto.value.nombre.trim(),
         email: contacto.value.email.trim(),
         telefono: contacto.value.telefono.trim(),
+        dni: contacto.value.dni.trim(),
+        domicilio: contacto.value.domicilio.trim(),
+        localidad: contacto.value.localidad.trim(),
       },
       citaExpress: citaExpress || urgente,
       notaExpress: urgente ? '' : (citaExpress ? notaExpress.value : ''),
@@ -140,6 +193,7 @@ async function enviar(citaExpress = false, urgente = false) {
         ? [peligroMuerte.value ? 'Peligro de muerte' : 'Urgencia en el extranjero', lugarUrgencia.value.trim()].filter(Boolean).join('. ')
         : '',
       textoUrgencia: urgente ? guionUrgencia.value : '',
+      profesionalId: profesionalElegido.value,
     }
     const video = urgente ? grabacionUrgencia.value : grabacion.value
     if (video && video.size > TAMANO_MAXIMO_VIDEO) {
@@ -341,6 +395,18 @@ async function guardarSimulacion() {
 
     <Albacea compacto />
 
+    <section class="otorgante" aria-labelledby="titulo-otorgante" data-testid="datos-otorgante">
+      <p class="kicker">Identificación</p>
+      <h3 id="titulo-otorgante">Datos de quien deja la herencia</h3>
+      <p class="nota">Estos datos pasan al borrador y al PDF para que el notario identifique al otorgante.</p>
+      <div class="form-otorgante">
+        <label>Nombre completo<input v-model="contacto.nombre" data-testid="otorgante-nombre" autocomplete="name" maxlength="120"></label>
+        <label>DNI / NIE<input v-model="contacto.dni" data-testid="otorgante-dni" maxlength="20" placeholder="12345678A"></label>
+        <label>Domicilio<input v-model="contacto.domicilio" data-testid="otorgante-domicilio" maxlength="200" placeholder="Calle, número, piso"></label>
+        <label>Localidad<input v-model="contacto.localidad" data-testid="otorgante-localidad" maxlength="120"></label>
+      </div>
+    </section>
+
     <article v-if="borrador" class="borrador" data-testid="borrador">
       <p class="kicker">Borrador para el notario</p>
       <h3>Testamento abierto</h3>
@@ -349,8 +415,59 @@ async function guardarSimulacion() {
         <h3>{{ clausula.titulo }}</h3>
         <p v-for="(parrafo, indice) in clausula.parrafos" :key="indice">{{ parrafo }}</p>
       </section>
-      <button type="button" class="secundario no-imprimir" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
+      <div class="acciones-borrador no-imprimir">
+        <button type="button" class="secundario" data-testid="imprimir-borrador" @click="imprimirBorrador">Imprimir borrador</button>
+        <button type="button" data-testid="descargar-pdf" @click="descargarPdf">Descargar PDF</button>
+      </div>
     </article>
+
+    <section class="directorio" aria-labelledby="titulo-directorio" data-testid="directorio-profesionales">
+      <p class="kicker">Siguiente paso</p>
+      <h3 id="titulo-directorio">¿Abogado o notaría?</h3>
+      <p>{{ guiaDirectorio.texto }}</p>
+      <label class="campo-suelto">
+        Filtrar por provincia
+        <select v-model="filtroProvinciaDir" data-testid="filtro-provincia-dir">
+          <option value="">Todas</option>
+          <option v-for="provincia in provinciasDirectorio" :key="provincia" :value="provincia">{{ provincia }}</option>
+        </select>
+      </label>
+      <div class="columnas-directorio">
+        <div>
+          <h4>Despachos de abogados</h4>
+          <p class="nota">Mejor opción si necesitas asesoría o hay avisos de revisión.</p>
+          <ul class="lista-directorio">
+            <li v-for="item in abogados" :key="item.id">
+              <strong>{{ item.nombre }}</strong>
+              <span class="nota">{{ item.localidad }} ({{ item.provincia }})</span>
+              <span v-if="item.telefono" class="nota">{{ item.telefono }}</span>
+              <button
+                type="button"
+                class="secundario"
+                :aria-pressed="profesionalElegido === item.id"
+                @click="elegirAbogado(item.id)"
+              >
+                {{ profesionalElegido === item.id ? 'Seleccionado' : 'Enviar consulta aquí' }}
+              </button>
+            </li>
+            <li v-if="!abogados.length" class="nota">No hay abogados demo en este filtro.</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Notarías</h4>
+          <p class="nota">Si lo tienes claro, puedes ir directamente a notarizar el borrador.</p>
+          <ul class="lista-directorio">
+            <li v-for="item in notarias" :key="item.id">
+              <strong>{{ item.nombre }}</strong>
+              <span class="nota">{{ item.localidad }} ({{ item.provincia }})</span>
+              <a v-if="item.telefono" :href="`tel:${item.telefono}`">{{ item.telefono }}</a>
+              <a v-if="item.email" :href="`mailto:${item.email}`">{{ item.email }}</a>
+            </li>
+            <li v-if="!notarias.length" class="nota">No hay notarías demo en este filtro.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
     <section class="testamento-urgencia" aria-labelledby="titulo-urgencia" data-testid="testamento-urgencia">
       <p class="kicker">Urgencia vital</p>
@@ -426,6 +543,9 @@ async function guardarSimulacion() {
     <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar(false)">
       <h3>{{ store.resultado.estado === 'revision_obligatoria' ? 'Solicita una revisión' : 'Revisa el resultado con el despacho' }}</h3>
       <label>Nombre<input v-model="contacto.nombre" required autocomplete="name"></label>
+      <label>DNI / NIE<input v-model="contacto.dni" maxlength="20"></label>
+      <label>Domicilio<input v-model="contacto.domicilio" maxlength="200"></label>
+      <label>Localidad<input v-model="contacto.localidad" maxlength="120"></label>
       <label>Email<input v-model="contacto.email" required type="email" autocomplete="email"></label>
       <label>Teléfono<input v-model="contacto.telefono" required type="tel" autocomplete="tel"></label>
       <label class="check"><input v-model="contacto.consentimiento_rgpd" data-testid="consentimiento" type="checkbox" required> {{ TEXTOS_LEGALES.consentimiento }}</label>

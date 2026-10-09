@@ -1,4 +1,5 @@
 import type { Input, Resultado } from '../domain/succession'
+import { nombreOtorgante, type DatosOtorgante } from './otorgante'
 
 function porcentajeDe(parte: number, total: number): string {
   if (total <= 0 || parte <= 0) return '0 %'
@@ -8,18 +9,28 @@ function porcentajeDe(parte: number, total: number): string {
   return decimales === 0 ? `${enteros} %` : `${enteros},${String(decimales).padStart(2, '0')} %`
 }
 
+function normalizarOtorgante(otorgante: DatosOtorgante | string): DatosOtorgante {
+  if (typeof otorgante === 'string') {
+    return { nombre: otorgante, dni: '', domicilio: '', localidad: '' }
+  }
+  return otorgante
+}
+
 export function redactarGuionUrgencia(
   input: Input,
   resultado: Resultado,
-  otorgante = '',
+  otorgante: DatosOtorgante | string = '',
   lugar = '',
 ): string {
-  const quien = otorgante.trim() || '________________________________'
+  const datos = normalizarOtorgante(otorgante)
+  const quien = nombreOtorgante(datos) || '________________________________'
+  const dni = datos.dni.trim()
+  const domicilio = [datos.domicilio.trim(), datos.localidad.trim()].filter(Boolean).join(', ')
   const donde = lugar.trim() || 'fuera de España, lejos de un notario español'
   const caudal = resultado.caudalCent
 
   const lineas = [
-    `Me llamo ${quien}. Estoy en ${donde}. Temo no llegar a tiempo a un notario o cónsul español.`,
+    `Me llamo ${quien}.${dni ? ` Mi DNI o NIE es ${dni}.` : ''}${domicilio ? ` Mi domicilio es ${domicilio}.` : ''} Estoy en ${donde}. Temo no llegar a tiempo a un notario o cónsul español.`,
     'Declaro que esta grabación y este texto recogen mi última voluntad sobre mi herencia. Sé que no sustituyen por sí solos un testamento notarial.',
   ]
 

@@ -7,6 +7,9 @@ export const contactoLeadSchema = z.object({
   nombre: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(200),
   telefono: z.string().trim().min(6).max(32),
+  dni: z.string().trim().max(20).optional().default(''),
+  domicilio: z.string().trim().max(200).optional().default(''),
+  localidad: z.string().trim().max(120).optional().default(''),
   consentimiento_rgpd: z.literal(true),
 })
 
@@ -18,6 +21,7 @@ export const leadBodySchema = z.object({
   urgente: z.boolean().optional().default(false),
   motivoUrgencia: z.string().trim().max(500).optional().default(''),
   textoUrgencia: z.string().trim().max(8000).optional().default(''),
+  profesionalId: z.string().trim().max(64).optional().default(''),
 })
 
 export type ContactoLead = z.infer<typeof contactoLeadSchema>

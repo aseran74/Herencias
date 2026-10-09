@@ -1,4 +1,5 @@
 import { parrafosAlbacea } from './albacea'
+import { nombreOtorgante, textoComparecencia, type DatosOtorgante } from './otorgante'
 import type { Input, Resultado } from '../domain/succession'
 
 export interface Clausula {
@@ -72,12 +73,24 @@ function calidadColateral(persona: Input['beneficiariosLibre'][number]): string 
   return 'persona'
 }
 
-export function redactarBorrador(input: Input, resultado: Resultado, otorgante = ''): Clausula[] | null {
+function normalizarOtorgante(otorgante: DatosOtorgante | string): DatosOtorgante {
+  if (typeof otorgante === 'string') {
+    return { nombre: otorgante, dni: '', domicilio: '', localidad: '' }
+  }
+  return otorgante
+}
+
+export function redactarBorrador(
+  input: Input,
+  resultado: Resultado,
+  otorgante: DatosOtorgante | string = '',
+): Clausula[] | null {
   if ((resultado.estado !== 'ok' && resultado.estado !== 'ok_con_avisos') || !resultado.tercios || resultado.caudalCent === null) {
     return null
   }
 
-  const quien = otorgante.trim() || '________________________________'
+  const datos = normalizarOtorgante(otorgante)
+  const quien = nombreOtorgante(datos) || '________________________________'
   const caudal = resultado.caudalCent
   const inventario = [
     ...input.inmuebles.map(inmueble =>
@@ -86,6 +99,7 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
       `${TIPO_ACTIVO[activo.tipo]}, en la participación del causante del ${porcentaje(activo.porcentajeCausanteBps)}.`),
   ]
   if (input.deudasCent > 0) inventario.push('Las deudas se restan del caudal por el importe que tengan al tiempo del fallecimiento.')
+  if (!inventario.length) inventario.push('El otorgante declara el caudal que resulte de su patrimonio al tiempo del fallecimiento, según el inventario que se formalice ante notario.')
 
   const herederos = resultado.porHeredero.map((persona) => {
     const partes = [
@@ -131,16 +145,21 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
       `${inmueble.nombre} se adjudica a ${nombreDe(input, resultado, parte.herederoId)} en un ${porcentaje(parte.bps)}.`)
   })
 
+  const localidadLugar = datos.localidad.trim() || '______________'
   const clausulas: Clausula[] = [
     {
       titulo: 'Advertencia',
-      parrafos: ['Este texto fija las cuotas en porcentaje, no en euros, porque el valor de mercado puede cambiar. No es escritura y el despacho debe revisarlo antes de la firma.'],
+      parrafos: [
+        'Este texto es un borrador orientativo de testamento abierto. Fija las cuotas en porcentaje, no en euros, porque el valor de mercado puede cambiar.',
+        'No es escritura pública, no produce efectos por sí solo y el despacho o el notario deben revisarlo antes de la firma.',
+      ],
     },
     {
-      titulo: 'Primera. Comparecencia',
+      titulo: 'Primera. Comparecencia e identificación',
       parrafos: [
-        `En ______________, a ____ de ______________ de ________.`,
-        `Ante mí, notario, comparece ${quien}, mayor de edad, ${situacionPersonal(input)}, con vecindad civil común. Manifiesta que otorga testamento abierto conforme al derecho común español.`,
+        `En ${localidadLugar}, a ____ de ______________ de ________.`,
+        textoComparecencia(datos, situacionPersonal(input)),
+        `El otorgante se identifica como ${quien} y declara ser cierto cuanto manifiesta en este instrumento.`,
       ],
     },
     {
@@ -223,8 +242,8 @@ export function redactarBorrador(input: Input, resultado: Resultado, otorgante =
   clausulas.push({
     titulo: 'Cierre',
     parrafos: [
-      'Así lo dice y otorga. El notario completará la identidad, las advertencias legales, la lectura y las firmas.',
-      'Firma del otorgante: ________________________________',
+      'Así lo dice y otorga. El notario completará la identidad plena, las advertencias legales, la lectura íntegra y las firmas.',
+      `Firma del otorgante (${quien}): ________________________________`,
       'Firma del notario: ________________________________',
     ],
   })

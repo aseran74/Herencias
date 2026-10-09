@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
       textoUrgencia: body.data.textoUrgencia,
       grabacionUrl,
       grabacionKey,
+      profesionalId: body.data.profesionalId,
     })
     return { id: lead.id }
   } catch {
