@@ -29,10 +29,12 @@ export default defineEventHandler(async (event) => {
 
   let grabacionUrl: string | null = null
   let grabacionKey: string | null = null
+  let shareToken: string | null = null
   if (grabacion && grabacion.data.byteLength > 0 && (body.data.citaExpress || body.data.urgente)) {
     const subida = await subirGrabacion(grabacion)
     grabacionUrl = subida.url
     grabacionKey = subida.key
+    shareToken = crypto.randomUUID().replace(/-/g, '')
   }
 
   try {
@@ -49,8 +51,10 @@ export default defineEventHandler(async (event) => {
       grabacionUrl,
       grabacionKey,
       profesionalId: body.data.profesionalId,
+      shareToken,
     })
-    return { id: lead.id }
+    const shareUrl = shareToken ? `/compartir/${shareToken}` : null
+    return { id: lead.id, shareUrl, shareToken }
   } catch {
     throw createError({ statusCode: 500, statusMessage: 'No se pudo guardar la consulta' })
   }

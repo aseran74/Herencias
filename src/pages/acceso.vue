@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import logo from '../assets/logo-gestiona-tu-herencia.png'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -47,6 +48,7 @@ function cambiarModo(nuevoModo: 'acceso' | 'registro') {
   <div class="pagina-cuenta">
     <main class="tarjeta-cuenta">
       <NuxtLink class="volver" to="/">← Volver al simulador</NuxtLink>
+      <img class="logo-cuenta" :src="logo" alt="Gestiona tu herencia" width="200" height="49">
       <p class="kicker">Tu espacio privado</p>
       <h1>{{ modo === 'registro' ? 'Crea tu perfil' : modo === 'verificacion' ? 'Verifica tu correo' : 'Bienvenido de nuevo' }}</h1>
       <p class="lede">

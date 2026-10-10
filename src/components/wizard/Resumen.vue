@@ -7,6 +7,7 @@ import { TEXTOS_LEGALES } from '../../content/legal'
 import { redactarBorrador } from '../../content/borrador'
 import { descargarBorradorPdf } from '../../content/borradorPdf'
 import { redactarGuionUrgencia } from '../../content/guionUrgencia'
+import { urlEmail, urlWhatsApp } from '../../composables/useCompartirVideo'
 import Albacea from './Albacea.vue'
 import GrabacionExpress from './GrabacionExpress.vue'
 import { guiaAbogadoONotaria, type Profesional } from '../../domain/profesionales'
@@ -39,9 +40,13 @@ const estadoGuardado = ref<'reposo' | 'exito' | 'error'>('reposo')
 const enviando = ref(false)
 const estadoEnvio = ref<'reposo' | 'exito' | 'error'>('reposo')
 const errorUrgencia = ref('')
+const enlaceCompartir = ref('')
+const rutaCompartir = ref('')
+const enlaceCopiado = ref(false)
 const profesionales = ref<Profesional[]>([])
 const filtroProvinciaDir = ref('')
 const profesionalElegido = ref('')
+const textoEnlaceVideo = 'Te mando el enlace a mi grabación sobre la herencia (orientativa, no es testamento).'
 const maximo = computed(() => Math.max(1, ...store.resultado.porHeredero.map(p => p.totalCent)))
 const receptoresLibre = computed(() =>
   store.resultado.porHeredero.filter(persona => persona.libreCent > 0),
@@ -136,6 +141,15 @@ function descargarPdf() {
 function elegirAbogado(id: string) {
   profesionalElegido.value = id
 }
+async function copiarEnlaceVideo() {
+  if (!enlaceCompartir.value) return
+  try {
+    await navigator.clipboard.writeText(enlaceCompartir.value)
+    enlaceCopiado.value = true
+  } catch {
+    enlaceCopiado.value = false
+  }
+}
 async function copiarGuion() {
   try {
     await navigator.clipboard.writeText(guionUrgencia.value)
@@ -174,6 +188,9 @@ async function enviar(citaExpress = false, urgente = false) {
   estadoExpress.value = 'reposo'
   estadoUrgencia.value = 'reposo'
   errorUrgencia.value = ''
+  enlaceCompartir.value = ''
+  rutaCompartir.value = ''
+  enlaceCopiado.value = false
   try {
     const payload = {
       input: store.input,
@@ -199,13 +216,18 @@ async function enviar(citaExpress = false, urgente = false) {
     if (video && video.size > TAMANO_MAXIMO_VIDEO) {
       throw new Error('El vídeo es demasiado grande. Quítalo y vuelve a grabar más corto, o envía solo el texto.')
     }
+    let respuesta: { id: string; shareUrl?: string | null } | null = null
     if ((citaExpress || urgente) && video) {
       const cuerpo = new FormData()
       cuerpo.append('payload', JSON.stringify(payload))
       cuerpo.append('grabacion', video, urgente ? 'urgencia.webm' : 'mensaje.webm')
-      await $fetch('/api/leads', { method: 'POST', body: cuerpo })
+      respuesta = await $fetch<{ id: string; shareUrl?: string | null }>('/api/leads', { method: 'POST', body: cuerpo })
     } else {
-      await $fetch('/api/leads', { method: 'POST', body: payload })
+      respuesta = await $fetch<{ id: string; shareUrl?: string | null }>('/api/leads', { method: 'POST', body: payload })
+    }
+    if (respuesta?.shareUrl) {
+      rutaCompartir.value = respuesta.shareUrl
+      enlaceCompartir.value = `${window.location.origin}${respuesta.shareUrl}`
     }
     if (urgente) estadoUrgencia.value = 'exito'
     else if (citaExpress) estadoExpress.value = 'exito'
@@ -507,6 +529,16 @@ async function guardarSimulacion() {
       </button>
       <p class="nota">Antes de enviar, completa nombre, email, teléfono y el consentimiento del formulario de contacto, más abajo. El vídeo es opcional.</p>
       <p v-if="estadoUrgencia === 'exito'" class="exito" role="status">Urgencia enviada. El despacho intentará localizarte de inmediato. Si puedes, contacta también con el consulado español.</p>
+      <div v-if="estadoUrgencia === 'exito' && enlaceCompartir" class="bloque-enlace-video" data-testid="enlace-compartir-urgencia">
+        <p class="nota">También puedes compartir el vídeo por WhatsApp o email:</p>
+        <code class="enlace-video">{{ enlaceCompartir }}</code>
+        <div class="acciones-compartir">
+          <a class="boton-wa" :href="urlWhatsApp(textoEnlaceVideo, enlaceCompartir)" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <a class="secundario" :href="urlEmail('Grabación de herencia', `${textoEnlaceVideo}\n\n${enlaceCompartir}`)">Email</a>
+          <button type="button" class="texto" @click="copiarEnlaceVideo">{{ enlaceCopiado ? 'Copiado' : 'Copiar enlace' }}</button>
+          <NuxtLink v-if="rutaCompartir" :to="rutaCompartir">Abrir página</NuxtLink>
+        </div>
+      </div>
       <p v-if="estadoUrgencia === 'error'" class="alerta" role="alert">{{ errorUrgencia || 'No se pudo enviar la urgencia. Inténtalo de nuevo o llama al despacho.' }}</p>
     </section>
 
@@ -557,6 +589,16 @@ async function guardarSimulacion() {
         <button type="submit" :disabled="enviando || !contacto.consentimiento_rgpd || !albaceaLista">{{ enviando ? 'Enviando…' : 'Hablar con el despacho' }}</button>
       </div>
       <p v-if="estadoExpress === 'exito'" class="exito" role="status">Solicitud express enviada. El despacho te citará en breve.</p>
+      <div v-if="estadoExpress === 'exito' && enlaceCompartir" class="bloque-enlace-video" data-testid="enlace-compartir-express">
+        <p class="nota">Comparte el vídeo con familiares o contigo mismo:</p>
+        <code class="enlace-video">{{ enlaceCompartir }}</code>
+        <div class="acciones-compartir">
+          <a class="boton-wa" :href="urlWhatsApp(textoEnlaceVideo, enlaceCompartir)" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <a class="secundario" :href="urlEmail('Grabación de herencia', `${textoEnlaceVideo}\n\n${enlaceCompartir}`)">Email</a>
+          <button type="button" class="texto" @click="copiarEnlaceVideo">{{ enlaceCopiado ? 'Copiado' : 'Copiar enlace' }}</button>
+          <NuxtLink v-if="rutaCompartir" :to="rutaCompartir">Abrir página</NuxtLink>
+        </div>
+      </div>
       <p v-if="estadoExpress === 'error'" class="alerta" role="alert">No se pudo enviar la cita express. Inténtalo de nuevo.</p>
       <p v-if="estadoEnvio === 'exito'" class="exito" role="status">Solicitud enviada. Te contactaremos pronto.</p>
       <p v-if="estadoEnvio === 'error'" class="alerta" role="alert">No se pudo enviar. Inténtalo de nuevo.</p>

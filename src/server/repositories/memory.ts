@@ -13,6 +13,7 @@ export class InMemoryLeadRepository implements LeadRepository {
       textoUrgencia: lead.textoUrgencia ?? '',
       grabacionUrl: lead.grabacionUrl ?? null,
       grabacionKey: lead.grabacionKey ?? null,
+      shareToken: lead.shareToken ?? null,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       consentimientoAt: new Date().toISOString(),
@@ -24,6 +25,13 @@ export class InMemoryLeadRepository implements LeadRepository {
   async findById(tenantId: string, id: string): Promise<Lead | null> {
     const lead = this.leads.get(clave(tenantId, id))
     return lead ? structuredClone(lead) : null
+  }
+
+  async findByShareToken(token: string): Promise<Lead | null> {
+    for (const lead of this.leads.values()) {
+      if (lead.shareToken === token) return structuredClone(lead)
+    }
+    return null
   }
 }
 

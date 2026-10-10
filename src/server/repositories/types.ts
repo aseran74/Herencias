@@ -16,6 +16,7 @@ export interface Lead {
   textoUrgencia: string
   grabacionUrl: string | null
   grabacionKey: string | null
+  shareToken: string | null
 }
 
 export interface LeadNuevo {
@@ -31,11 +32,13 @@ export interface LeadNuevo {
   grabacionUrl?: string | null
   grabacionKey?: string | null
   profesionalId?: string
+  shareToken?: string | null
 }
 
 export interface LeadRepository {
   save(lead: LeadNuevo): Promise<Lead>
   findById(tenantId: string, id: string): Promise<Lead | null>
+  findByShareToken(token: string): Promise<Lead | null>
 }
 
 export interface Tenant {

@@ -77,22 +77,21 @@ a { color: var(--verde); }
   pointer-events: auto;
 }
 .marca {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;
-  color: #fff;
-  font-family: Fraunces, serif;
-  font-weight: 600;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: .2rem .55rem .2rem .35rem;
+  border-radius: .65rem;
+  background: #fff;
   text-decoration: none;
 }
-.marca span {
-  margin-top: .12rem;
-  color: #fff;
-  font-family: 'Atkinson Hyperlegible', sans-serif;
-  font-size: .58rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+.marca-logo {
+  display: block;
+  width: min(220px, 48vw);
+  height: auto;
+  max-height: 3.1rem;
+  object-fit: contain;
 }
 .cuenta-nav { display: flex; gap: .65rem; align-items: center; }
 .cuenta-nav a { color: #fff; text-decoration: none; }
@@ -403,7 +402,56 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .cita-express form { display: grid; gap: .7rem; }
 .cita-express textarea { width: 100%; min-height: 5rem; resize: vertical; }
 .grabacion-express { display: grid; gap: .7rem; }
-.acciones-grabacion { display: flex; flex-wrap: wrap; gap: .5rem; }
+.acciones-grabacion,
+.acciones-compartir-local,
+.acciones-compartir { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.bloque-enlace-video {
+  display: grid;
+  gap: .55rem;
+  margin-top: .7rem;
+  padding: .85rem;
+  border: 1px dashed var(--linea);
+  border-radius: .5rem;
+  background: #fff;
+}
+.enlace-video {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: .85rem;
+  padding: .45rem .55rem;
+  background: color-mix(in srgb, var(--linea) 35%, white);
+  border-radius: .35rem;
+}
+.boton-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .55rem .9rem;
+  border-radius: .45rem;
+  background: #128c7e;
+  color: #fff !important;
+  text-decoration: none;
+  font-weight: 600;
+}
+.pagina-compartir {
+  width: min(720px, calc(100% - 2rem));
+  margin: 1rem auto 4rem;
+}
+.logo-compartir {
+  display: block;
+  width: min(200px, 70%);
+  height: auto;
+  margin: .2rem 0 .4rem;
+}
+.tarjeta-compartir {
+  padding: clamp(1.3rem, 3vw, 2.2rem);
+  border-radius: 1rem;
+  background: var(--hoja);
+  box-shadow: var(--sombra);
+  display: grid;
+  gap: .8rem;
+}
+.video-compartir { width: 100%; max-height: 22rem; background: #111; border-radius: .5rem; }
 .video-express { width: 100%; max-height: 16rem; background: #111; }
 .guion-lectura {
   max-height: 14rem;
@@ -450,6 +498,12 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
   margin: 1rem auto 4rem;
 }
 .pagina-cuenta { display: grid; min-height: calc(100vh - 7rem); place-items: start center; padding-top: 2rem; }
+.logo-cuenta {
+  display: block;
+  width: min(200px, 70%);
+  height: auto;
+  margin: .35rem 0 .2rem;
+}
 .tarjeta-cuenta {
   width: min(32rem, 100%);
   padding: clamp(1.5rem, 4vw, 3rem);

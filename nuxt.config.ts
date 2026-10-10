@@ -7,8 +7,11 @@ export default defineNuxtConfig({
   css: ['~/assets/main.css'],
   app: {
     head: {
-      title: 'Cuaderno de partición',
+      title: 'Gestiona tu herencia',
       htmlAttrs: { lang: 'es' },
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+      ],
       meta: [
         {
           name: 'description',

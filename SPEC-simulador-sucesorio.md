@@ -196,6 +196,8 @@ Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, conse
 - No persistir antes del envío.
 - El navegador envía a `POST /api/leads` (JSON o multipart con vídeo opcional); Nitro valida, recalcula y persiste con credencial administrativa.
 - La grabación, si existe, se guarda en el cubo privado `grabaciones-express`; se persisten `url` y `key`.
+- Tras grabar, el usuario puede guardar el vídeo en el dispositivo o compartirlo (WhatsApp, email u otras apps) con el archivo.
+- Tras enviarlo al despacho, se genera un `share_token` y una página pública `/compartir/{token}` con enlace firmado al vídeo para reenviar por WhatsApp o email.
 - RLS bloquea acceso directo público a `leads`; la lectura queda reservada al despacho.
 
 ### Directorio y admin

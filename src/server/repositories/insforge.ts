@@ -21,6 +21,7 @@ interface FilaLead {
   texto_urgencia: string
   grabacion_url: string | null
   grabacion_key: string | null
+  share_token: string | null
 }
 
 interface FilaDespacho {
@@ -66,9 +67,10 @@ class InsforgeLeadRepository implements LeadRepository {
           otorgante_dni: lead.contacto.dni ?? '',
           otorgante_domicilio: lead.contacto.domicilio ?? '',
           otorgante_localidad: lead.contacto.localidad ?? '',
+          share_token: lead.shareToken ?? null,
         },
       ])
-      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key')
+      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key, share_token')
       .limit(1)
 
     const fila = primeraFila<FilaLead>(data)
@@ -79,9 +81,21 @@ class InsforgeLeadRepository implements LeadRepository {
   async findById(tenantId: string, id: string): Promise<Lead | null> {
     const { data, error } = await this.cliente.database
       .from('leads')
-      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key')
+      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key, share_token')
       .eq('id', id)
       .eq('despacho_id', tenantId)
+      .limit(1)
+
+    if (error) throw new Error('No se pudo leer la consulta')
+    const fila = primeraFila<FilaLead>(data)
+    return fila ? aLead(fila) : null
+  }
+
+  async findByShareToken(token: string): Promise<Lead | null> {
+    const { data, error } = await this.cliente.database
+      .from('leads')
+      .select('id, despacho_id, created_at, nombre, email, telefono, consentimiento_rgpd, consentimiento_at, input_json, resultado_json, cita_express, nota_express, urgente, motivo_urgencia, texto_urgencia, grabacion_url, grabacion_key, share_token')
+      .eq('share_token', token)
       .limit(1)
 
     if (error) throw new Error('No se pudo leer la consulta')
@@ -127,6 +141,7 @@ function aLead(fila: FilaLead): Lead {
     textoUrgencia: fila.texto_urgencia ?? '',
     grabacionUrl: fila.grabacion_url ?? null,
     grabacionKey: fila.grabacion_key ?? null,
+    shareToken: fila.share_token ?? null,
   }
 }
 
