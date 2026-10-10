@@ -88,9 +88,9 @@ a { color: var(--verde); }
 }
 .marca-logo {
   display: block;
-  width: min(220px, 48vw);
+  width: min(240px, 52vw);
   height: auto;
-  max-height: 3.1rem;
+  max-height: 3.5rem;
   object-fit: contain;
 }
 .cuenta-nav { display: flex; gap: .65rem; align-items: center; }
