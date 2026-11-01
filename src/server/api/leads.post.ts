@@ -85,11 +85,13 @@ async function subirGrabacion(archivo: { filename?: string; type?: string; data:
   const apiKey = String(config.insforgeApiKey || '')
   if (!url || !apiKey) throw createError({ statusCode: 500, statusMessage: 'No se pudo guardar la grabación' })
 
-  const clave = `express/${crypto.randomUUID()}.webm`
+  const tipo = archivo.type || (archivo.filename?.endsWith('.mp4') ? 'video/mp4' : 'video/webm')
+  const extension = tipo.includes('mp4') || archivo.filename?.endsWith('.mp4') ? 'mp4' : 'webm'
+  const clave = `express/${crypto.randomUUID()}.${extension}`
   const cliente = createAdminClient({ baseUrl: url, apiKey })
   const { data, error } = await cliente.storage.from(CUBO_GRABACIONES).upload(
     clave,
-    new Blob([Uint8Array.from(archivo.data)], { type: archivo.type || 'video/webm' }),
+    new Blob([Uint8Array.from(archivo.data)], { type: tipo }),
   )
   if (error || !data) throw createError({ statusCode: 500, statusMessage: 'No se pudo guardar la grabación' })
   return { url: data.url as string, key: data.key as string }

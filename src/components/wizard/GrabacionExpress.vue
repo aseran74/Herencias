@@ -21,6 +21,7 @@ const grabando = ref(false)
 const previsualizacion = ref('')
 const visor = ref<HTMLVideoElement | null>(null)
 const segundos = ref(0)
+const mimeGrabacion = ref('video/webm')
 
 let media: MediaRecorder | null = null
 let camara: MediaStream | null = null
@@ -29,6 +30,18 @@ const trozos: Blob[] = []
 
 onUnmounted(() => detenerCamara())
 
+function elegirMime(): string {
+  const candidatos = [
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4',
+  ]
+  return candidatos.find(tipo => MediaRecorder.isTypeSupported(tipo)) ?? ''
+}
+
 async function empezar() {
   error.value = ''
   aviso.value = ''
@@ -36,16 +49,31 @@ async function empezar() {
   try {
     camara = await navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: 'user' },
-      audio: true,
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
     })
-    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-      ? 'video/webm;codecs=vp9,opus'
-      : 'video/webm'
-    media = new MediaRecorder(camara, {
-      mimeType: mime,
+    const pistasAudio = camara.getAudioTracks()
+    if (!pistasAudio.length) {
+      detenerCamara()
+      error.value = 'No se detectó micrófono. Activa el audio del navegador e inténtalo de nuevo.'
+      return
+    }
+    pistasAudio.forEach((pista) => {
+      pista.enabled = true
+    })
+
+    const mime = elegirMime()
+    mimeGrabacion.value = mime.startsWith('video/mp4') ? 'video/mp4' : (mime || 'video/webm')
+    const opciones: MediaRecorderOptions = {
       videoBitsPerSecond: props.tope > 60 ? 250_000 : 400_000,
-      audioBitsPerSecond: 64_000,
-    })
+      audioBitsPerSecond: 128_000,
+    }
+    if (mime) opciones.mimeType = mime
+
+    media = new MediaRecorder(camara, opciones)
     media.ondataavailable = (evento) => {
       if (evento.data.size) trozos.push(evento.data)
     }
@@ -53,15 +81,20 @@ async function empezar() {
     grabando.value = true
     segundos.value = 0
     await nextTick()
-    if (visor.value) visor.value.srcObject = camara
+    if (visor.value) {
+      visor.value.srcObject = camara
+      visor.value.muted = true
+      await visor.value.play().catch(() => undefined)
+    }
     temporizador = setInterval(() => {
       segundos.value += 1
       if (segundos.value >= props.tope) parar()
     }, 1000)
-    media.start()
+    // Timeslice: asegura trozos con audio muxado de forma fiable en Chromium.
+    media.start(1_000)
   } catch {
     detenerCamara()
-    error.value = 'No se pudo abrir la cámara. Puedes enviar el texto sin vídeo.'
+    error.value = 'No se pudo abrir la cámara o el micrófono. Revisa los permisos y vuelve a intentarlo.'
   }
 }
 
@@ -73,9 +106,11 @@ function finalizar() {
   grabando.value = false
   if (temporizador) clearInterval(temporizador)
   temporizador = null
+  const tipo = media?.mimeType || mimeGrabacion.value
   detenerCamara()
   if (!trozos.length) return
-  grabacion.value = new Blob(trozos, { type: 'video/webm' })
+  grabacion.value = new Blob(trozos, { type: tipo.includes('mp4') ? 'video/mp4' : tipo || 'video/webm' })
+  mimeGrabacion.value = grabacion.value.type
   previsualizacion.value = URL.createObjectURL(grabacion.value)
   trozos.length = 0
 }
@@ -90,14 +125,25 @@ function borrar() {
 }
 
 function detenerCamara() {
+  if (visor.value) {
+    visor.value.srcObject = null
+  }
   camara?.getTracks().forEach(pista => pista.stop())
   camara = null
   media = null
 }
 
+function extensionArchivo(): string {
+  return mimeGrabacion.value.includes('mp4') ? 'mp4' : 'webm'
+}
+
+function nombreDescarga(): string {
+  return nombreArchivoVideo(props.nombreArchivo).replace(/\.webm$/i, `.${extensionArchivo()}`)
+}
+
 function descargar() {
   if (!grabacion.value) return
-  descargarBlob(grabacion.value, nombreArchivoVideo(props.nombreArchivo))
+  descargarBlob(grabacion.value, nombreDescarga())
   aviso.value = 'Vídeo guardado en tu dispositivo.'
 }
 
@@ -106,7 +152,7 @@ async function compartir() {
   const resultado = await compartirArchivoVideo(grabacion.value, {
     titulo: 'Grabación de herencia',
     texto: 'Te mando la grabación de mi voluntad sucesoria (orientativa, no es testamento).',
-    nombre: nombreArchivoVideo(props.nombreArchivo),
+    nombre: nombreDescarga(),
   })
   if (resultado === 'compartido') aviso.value = 'Vídeo compartido.'
   else if (resultado === 'descargado') aviso.value = 'Tu dispositivo no permite compartir el archivo aquí. Se ha descargado para que lo envíes por WhatsApp o email.'
@@ -135,8 +181,26 @@ async function compartir() {
       <button type="button" class="secundario" data-testid="descargar-video" @click="descargar">Guardar en el móvil</button>
       <button type="button" data-testid="compartir-video" @click="compartir">Compartir (WhatsApp, email…)</button>
     </div>
-    <video v-if="grabando" ref="visor" class="video-express" autoplay muted playsinline></video>
-    <video v-else-if="previsualizacion" :src="previsualizacion" class="video-express" controls playsinline></video>
+    <!-- key distinto: evita que Vue reutilice el <video muted> del directo y deje la previsualización sin sonido -->
+    <video
+      v-if="grabando"
+      key="visor-vivo"
+      ref="visor"
+      class="video-express"
+      autoplay
+      muted
+      playsinline
+    />
+    <video
+      v-else-if="previsualizacion"
+      key="visor-preview"
+      :src="previsualizacion"
+      class="video-express"
+      controls
+      playsinline
+      :muted="false"
+      data-testid="preview-video"
+    />
     <p v-if="aviso" class="exito" role="status">{{ aviso }}</p>
     <p v-if="error" class="nota">{{ error }}</p>
   </div>

@@ -242,7 +242,8 @@ async function enviar(citaExpress = false, urgente = false) {
     if ((citaExpress || urgente) && video) {
       const cuerpo = new FormData()
       cuerpo.append('payload', JSON.stringify(payload))
-      cuerpo.append('grabacion', video, urgente ? 'urgencia.webm' : 'mensaje.webm')
+      const extension = video.type.includes('mp4') ? 'mp4' : 'webm'
+      cuerpo.append('grabacion', video, urgente ? `urgencia.${extension}` : `mensaje.${extension}`)
       respuesta = await $fetch<{ id: string; shareUrl?: string | null }>('/api/leads', { method: 'POST', body: cuerpo })
     } else {
       respuesta = await $fetch<{ id: string; shareUrl?: string | null }>('/api/leads', { method: 'POST', body: payload })
