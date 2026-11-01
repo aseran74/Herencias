@@ -88,9 +88,9 @@ a { color: var(--verde); }
 }
 .marca-logo {
   display: block;
-  width: min(240px, 52vw);
+  width: min(220px, 48vw);
   height: auto;
-  max-height: 3.5rem;
+  max-height: 3.1rem;
   object-fit: contain;
 }
 .cuenta-nav { display: flex; gap: .65rem; align-items: center; }
@@ -312,6 +312,26 @@ button.texto { min-height: auto; padding: .25rem; background: transparent; color
 .cribado { display: grid; gap: .65rem; padding: 0; border: 0; }
 .pregunta { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem; border-bottom: 1px solid var(--linea); }
 .pregunta label { display: flex; align-items: center; gap: .35rem; }
+.condiciones-especiales,
+.usufructo-inmueble,
+.nuda-propiedad {
+  display: grid;
+  gap: .65rem;
+  margin-top: 1.4rem;
+  padding: 1rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--linea);
+}
+.condiciones-especiales legend,
+.usufructo-inmueble legend,
+.nuda-propiedad legend {
+  padding: 0;
+  font-weight: 600;
+}
+.nuda-propiedad {
+  margin-top: .4rem;
+  padding-top: .6rem;
+}
 .cifra-destacada { margin: 1rem 0; padding: 1rem; border-left: .35rem solid var(--oro); background: #fffaf0; }
 .cifra-destacada strong { display: block; font-family: Fraunces, serif; font-size: 2rem; }
 .atribucion-estricta { margin-top: 1.4rem; }

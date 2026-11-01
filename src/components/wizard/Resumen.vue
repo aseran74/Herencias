@@ -4,7 +4,7 @@ import { centimosAEuros } from '../../composables/useSuccession'
 import { guardarPendiente } from '../../composables/useGuardadoPendiente'
 import { useSimulaciones } from '../../composables/useSimulaciones'
 import { TEXTOS_LEGALES } from '../../content/legal'
-import { redactarBorrador } from '../../content/borrador'
+import { redactarBorrador, redactarClausulaUsufructo } from '../../content/borrador'
 import { descargarBorradorPdf } from '../../content/borradorPdf'
 import { redactarGuionUrgencia } from '../../content/guionUrgencia'
 import { urlEmail, urlWhatsApp } from '../../composables/useCompartirVideo'
@@ -59,6 +59,22 @@ const datosOtorgante = computed(() => ({
   localidad: contacto.value.localidad,
 }))
 const borrador = computed(() => redactarBorrador(store.input, store.resultado, datosOtorgante.value))
+const clausulaUsufructo = computed(() =>
+  redactarClausulaUsufructo(store.input, store.resultado, 'Legado de usufructo'),
+)
+const borradorVisible = computed(() => {
+  if (borrador.value) return borrador.value
+  if (!clausulaUsufructo.value) return null
+  return [
+    {
+      titulo: 'Advertencia',
+      parrafos: [
+        'Este caso requiere revisión del despacho, pero la disposición de usufructo pedida se incluye aquí para que forme parte de la redacción final.',
+      ],
+    },
+    clausulaUsufructo.value,
+  ]
+})
 const guionUrgencia = computed(() =>
   redactarGuionUrgencia(store.input, store.resultado, datosOtorgante.value, lugarUrgencia.value),
 )
@@ -113,6 +129,7 @@ const etiquetasAviso: Record<string, string> = {
   REGIMEN_GANANCIALES: 'Solo se computa la participación del causante en los bienes gananciales.',
   DIFERENCIAS_ADJUDICACION: 'La adjudicación presenta diferencias que pueden requerir compensación.',
   SIN_DESCENDIENTES_LIBRE_TOTAL: 'Sin descendientes, todo el caudal se trata como libre disposición. Si viven padres o abuelos, el notario revisará su legítima.',
+  USUFRUCTO_INMUEBLE: 'Hay un usufructo de inmueble orientativo; el notario concretará su alcance sin valoración en euros en este borrador.',
 }
 const etiquetasMotivo: Record<string, string> = {
   REGIMEN_FORAL: 'La vecindad civil indicada tiene derecho foral.',
@@ -123,7 +140,12 @@ const etiquetasMotivo: Record<string, string> = {
   BIENES_EXTRANJERO: 'Hay bienes en el extranjero.',
   PACTO_SUCESORIO: 'Existe un pacto sucesorio.',
   DONACIONES_PREVIAS: 'Hay donaciones previas.',
+  CONDICIONES_ESPECIALES: 'Has pedido condiciones especiales (fiducia, sustitución, legado condicionado u otras) que debe redactar el despacho.',
 }
+const preparaHerencia = computed(() =>
+  store.resultado.estado === 'revision_obligatoria'
+  && store.resultado.motivos.includes('CONDICIONES_ESPECIALES'),
+)
 function imprimirBorrador() {
   const nodo = document.querySelector('[data-testid="borrador"]')
   if (!nodo) return
@@ -135,8 +157,8 @@ function imprimirBorrador() {
   ventana.print()
 }
 function descargarPdf() {
-  if (!borrador.value) return
-  descargarBorradorPdf(borrador.value)
+  if (!borradorVisible.value) return
+  descargarBorradorPdf(borradorVisible.value)
 }
 function elegirAbogado(id: string) {
   profesionalElegido.value = id
@@ -346,6 +368,28 @@ async function guardarSimulacion() {
           El tercio no cambia de importe.
         </p>
       </section>
+      <section
+        v-if="store.input.usufructoInmueble.activo && store.input.usufructoInmueble.inmuebleId && store.input.usufructoInmueble.usufructuarioId"
+        class="libre-resumen"
+        data-testid="resumen-usufructo"
+      >
+        <h3>Usufructo de inmueble</h3>
+        <p>
+          Usufructo de
+          {{ store.input.inmuebles.find(bien => bien.id === store.input.usufructoInmueble.inmuebleId)?.nombre }}
+          para
+          {{ store.beneficiarios.find(persona => persona.id === store.input.usufructoInmueble.usufructuarioId)?.nombre }}.
+          Nuda propiedad:
+          {{
+            store.input.usufructoInmueble.nudaPropiedadIds.length
+              ? store.input.usufructoInmueble.nudaPropiedadIds
+                .map(id => store.beneficiarios.find(persona => persona.id === id)?.nombre ?? id)
+                .join(', ')
+              : 'herederos según este testamento'
+          }}.
+          Sin valoración en euros.
+        </p>
+      </section>
       <p class="leyenda-tercios" v-if="!store.sinDescendientes">
         <span><i class="muestra estricta" /> Estricta</span>
         <span><i class="muestra mejora" /> Mejora</span>
@@ -429,11 +473,11 @@ async function guardarSimulacion() {
       </div>
     </section>
 
-    <article v-if="borrador" class="borrador" data-testid="borrador">
+    <article v-if="borradorVisible" class="borrador" data-testid="borrador">
       <p class="kicker">Borrador para el notario</p>
-      <h3>Testamento abierto</h3>
+      <h3>{{ borrador ? 'Testamento abierto' : 'Disposiciones para la redacción final' }}</h3>
       <p class="nota">{{ TEXTOS_LEGALES.avisoBorrador }}</p>
-      <section v-for="clausula in borrador" :key="clausula.titulo">
+      <section v-for="clausula in borradorVisible" :key="clausula.titulo">
         <h3>{{ clausula.titulo }}</h3>
         <p v-for="(parrafo, indice) in clausula.parrafos" :key="indice">{{ parrafo }}</p>
       </section>
@@ -573,7 +617,18 @@ async function guardarSimulacion() {
     </section>
 
     <form class="lead" data-testid="formulario-lead" @submit.prevent="enviar(false)">
-      <h3>{{ store.resultado.estado === 'revision_obligatoria' ? 'Solicita una revisión' : 'Revisa el resultado con el despacho' }}</h3>
+      <h3>
+        {{
+          preparaHerencia
+            ? 'Que el despacho prepare la herencia'
+            : store.resultado.estado === 'revision_obligatoria'
+              ? 'Solicita una revisión'
+              : 'Revisa el resultado con el despacho'
+        }}
+      </h3>
+      <p v-if="preparaHerencia" class="nota" data-testid="cta-condiciones">
+        Has marcado condiciones especiales. El despacho redactará la cláusula a partir de tu texto.
+      </p>
       <label>Nombre<input v-model="contacto.nombre" required autocomplete="name"></label>
       <label>DNI / NIE<input v-model="contacto.dni" maxlength="20"></label>
       <label>Domicilio<input v-model="contacto.domicilio" maxlength="200"></label>
@@ -586,7 +641,15 @@ async function guardarSimulacion() {
         <button type="button" data-testid="cita-express-enviar" :disabled="enviandoExpress || !contacto.consentimiento_rgpd || !albaceaLista" @click="enviar(true)">
           {{ enviandoExpress ? 'Enviando…' : 'Pedir cita express' }}
         </button>
-        <button type="submit" :disabled="enviando || !contacto.consentimiento_rgpd || !albaceaLista">{{ enviando ? 'Enviando…' : 'Hablar con el despacho' }}</button>
+        <button type="submit" data-testid="enviar-lead" :disabled="enviando || !contacto.consentimiento_rgpd || !albaceaLista">
+          {{
+            enviando
+              ? 'Enviando…'
+              : preparaHerencia
+                ? 'Que el despacho prepare la herencia'
+                : 'Hablar con el despacho'
+          }}
+        </button>
       </div>
       <p v-if="estadoExpress === 'exito'" class="exito" role="status">Solicitud express enviada. El despacho te citará en breve.</p>
       <div v-if="estadoExpress === 'exito' && enlaceCompartir" class="bloque-enlace-video" data-testid="enlace-compartir-express">

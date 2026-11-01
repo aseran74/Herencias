@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { centimosAEuros } from '../../composables/useSuccession'
 import { useWizardStore } from '../../stores/wizard'
+
 const store = useWizardStore()
 const arrastrado = ref<string | null>(null)
 
@@ -26,6 +27,31 @@ function porcentaje(bps: number) {
 function fijarPorcentaje(item: { bps: number }, valor: string) {
   const porcentajeElegido = Math.min(100, Math.max(0, Math.round(Number(valor) || 0)))
   item.bps = porcentajeElegido * 100
+}
+
+const usufructo = computed(() => store.input.usufructoInmueble)
+const candidatosNuda = computed(() =>
+  store.beneficiarios.filter(persona => persona.id !== usufructo.value.usufructuarioId),
+)
+
+watch(() => usufructo.value.activo, (activo) => {
+  if (!activo) {
+    store.input.usufructoInmueble.inmuebleId = null
+    store.input.usufructoInmueble.usufructuarioId = null
+    store.input.usufructoInmueble.nudaPropiedadIds = []
+  }
+})
+
+watch(() => usufructo.value.usufructuarioId, (id) => {
+  if (!id) return
+  store.input.usufructoInmueble.nudaPropiedadIds = store.input.usufructoInmueble.nudaPropiedadIds
+    .filter(candidato => candidato !== id)
+})
+
+function toggleNuda(id: string, marcado: boolean) {
+  const lista = store.input.usufructoInmueble.nudaPropiedadIds
+  if (marcado && !lista.includes(id)) lista.push(id)
+  if (!marcado) store.input.usufructoInmueble.nudaPropiedadIds = lista.filter(item => item !== id)
 }
 </script>
 
@@ -70,5 +96,45 @@ function fijarPorcentaje(item: { bps: number }, valor: string) {
         </div>
       </div>
     </div>
+
+    <fieldset class="usufructo-inmueble" data-testid="usufructo-inmueble" v-if="store.input.inmuebles.length">
+      <legend>Usufructo de un inmueble</legend>
+      <p class="nota">
+        Puedes dejar el uso y disfrute a una persona y la nuda propiedad a los herederos.
+        Es orientativo: el borrador no valora el usufructo en euros.
+      </p>
+      <label class="check">
+        <input v-model="store.input.usufructoInmueble.activo" type="checkbox" data-testid="usufructo-activo">
+        Quiero dejar un inmueble en usufructo
+      </label>
+      <template v-if="store.input.usufructoInmueble.activo">
+        <label class="campo-suelto">
+          Inmueble
+          <select v-model="store.input.usufructoInmueble.inmuebleId" data-testid="usufructo-inmueble-id">
+            <option :value="null">Selecciona…</option>
+            <option v-for="bien in store.input.inmuebles" :key="bien.id" :value="bien.id">{{ bien.nombre }}</option>
+          </select>
+        </label>
+        <label class="campo-suelto">
+          Usufructuario
+          <select v-model="store.input.usufructoInmueble.usufructuarioId" data-testid="usufructo-persona">
+            <option :value="null">Selecciona…</option>
+            <option v-for="persona in store.beneficiarios" :key="persona.id" :value="persona.id">{{ persona.nombre }}</option>
+          </select>
+        </label>
+        <fieldset class="nuda-propiedad">
+          <legend>Nuda propiedad</legend>
+          <p class="nota">Si no marcas a nadie, la nuda propiedad queda para los herederos según este testamento.</p>
+          <label v-for="persona in candidatosNuda" :key="persona.id" class="check">
+            <input
+              type="checkbox"
+              :checked="store.input.usufructoInmueble.nudaPropiedadIds.includes(persona.id)"
+              @change="toggleNuda(persona.id, ($event.target as HTMLInputElement).checked)"
+            >
+            {{ persona.nombre }}
+          </label>
+        </fieldset>
+      </template>
+    </fieldset>
   </section>
 </template>

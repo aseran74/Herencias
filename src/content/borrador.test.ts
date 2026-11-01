@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { calcularSucesion, type Input } from '../domain/succession'
-import { redactarBorrador } from './borrador'
+import { redactarBorrador, redactarClausulaUsufructo } from './borrador'
 
 function entrada(extra: Partial<Input> = {}): Input {
   return {
@@ -22,6 +22,15 @@ function entrada(extra: Partial<Input> = {}): Input {
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
     adjudicaciones: [],
+    usufructoInmueble: { activo: false, inmuebleId: null, usufructuarioId: null, nudaPropiedadIds: [] },
+    condicionesEspeciales: {
+      fiducia: false,
+      sustitucion: false,
+      legadoCondicionado: false,
+      inalienabilidad: false,
+      otra: false,
+      texto: '',
+    },
     comunidadIsd: null,
     quiereAlbacea: true,
     nombreAlbacea: 'Luis Ortega',
@@ -105,5 +114,50 @@ describe('borrador notarial', () => {
   it('no redacta un caso que exige revisión', () => {
     const input = entrada({ regimen: 'cataluna' })
     expect(redactarBorrador(input, calcularSucesion(input))).toBeNull()
+  })
+
+  it('incluye el usufructo de un inmueble en la redacción final sin euros', () => {
+    const input = entrada({
+      usufructoInmueble: {
+        activo: true,
+        inmuebleId: 'casa',
+        usufructuarioId: 'ana',
+        nudaPropiedadIds: ['bruno', 'clara'],
+      },
+    })
+    const clausulas = redactarBorrador(input, calcularSucesion(input), 'Pedro Gil')
+    const titulos = clausulas?.map(clausula => clausula.titulo).join(' ') ?? ''
+    const texto = clausulas?.flatMap(clausula => clausula.parrafos).join(' ') ?? ''
+    expect(titulos).toMatch(/Legado de usufructo/)
+    expect(texto).toContain('usufructo vitalicio')
+    expect(texto).toContain('Vivienda')
+    expect(texto).toContain('Ana')
+    expect(texto).toContain('Bruno')
+    expect(texto).toContain('Clara')
+    expect(texto).toContain('sujeto al usufructo vitalicio dispuesto más adelante')
+    expect(texto).not.toContain('€')
+  })
+
+  it('no redacta el testamento completo cuando hay condiciones especiales, pero sí la cláusula de usufructo', () => {
+    const input = entrada({
+      condicionesEspeciales: {
+        fiducia: false,
+        sustitucion: true,
+        legadoCondicionado: false,
+        inalienabilidad: false,
+        otra: false,
+        texto: 'Sustitución vulgar a favor de los nietos',
+      },
+      usufructoInmueble: {
+        activo: true,
+        inmuebleId: 'casa',
+        usufructuarioId: 'ana',
+        nudaPropiedadIds: [],
+      },
+    })
+    expect(redactarBorrador(input, calcularSucesion(input))).toBeNull()
+    const clausula = redactarClausulaUsufructo(input, calcularSucesion(input))
+    expect(clausula?.parrafos.join(' ')).toContain('usufructo vitalicio')
+    expect(clausula?.parrafos.join(' ')).toContain('Ana')
   })
 })

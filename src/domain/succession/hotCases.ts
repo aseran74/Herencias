@@ -3,6 +3,7 @@ import type {
   Input,
   MotivoRevision,
 } from './types'
+import { hayCondicionesEspeciales } from './types'
 import { hayEstirpes } from './validate'
 
 export function detectarCasosBloqueantes(input: Input): MotivoRevision[] {
@@ -16,6 +17,7 @@ export function detectarCasosBloqueantes(input: Input): MotivoRevision[] {
   if (input.flags.bienesExtranjero) motivos.push('BIENES_EXTRANJERO')
   if (input.flags.pactoSucesorio) motivos.push('PACTO_SUCESORIO')
   if (input.donaciones.length > 0) motivos.push('DONACIONES_PREVIAS')
+  if (hayCondicionesEspeciales(input.condicionesEspeciales)) motivos.push('CONDICIONES_ESPECIALES')
 
   return motivos
 }
@@ -34,6 +36,13 @@ export function detectarAvisos(input: Input): CodigoAviso[] {
   }
   if (!hayEstirpes(input) && input.beneficiariosLibre.some(persona => persona.nombre.trim())) {
     avisos.push('SIN_DESCENDIENTES_LIBRE_TOTAL')
+  }
+  if (
+    input.usufructoInmueble.activo
+    && input.usufructoInmueble.inmuebleId
+    && input.usufructoInmueble.usufructuarioId
+  ) {
+    avisos.push('USUFRUCTO_INMUEBLE')
   }
 
   return avisos

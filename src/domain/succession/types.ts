@@ -123,6 +123,46 @@ export interface AtribucionEstricta {
   inmuebleId: string | null
 }
 
+export interface UsufructoInmueble {
+  activo: boolean
+  inmuebleId: string | null
+  usufructuarioId: string | null
+  nudaPropiedadIds: string[]
+}
+
+export function usufructoInmuebleInicial(): UsufructoInmueble {
+  return { activo: false, inmuebleId: null, usufructuarioId: null, nudaPropiedadIds: [] }
+}
+
+export interface CondicionesEspeciales {
+  fiducia: boolean
+  sustitucion: boolean
+  legadoCondicionado: boolean
+  inalienabilidad: boolean
+  otra: boolean
+  texto: string
+}
+
+export function condicionesEspecialesIniciales(): CondicionesEspeciales {
+  return {
+    fiducia: false,
+    sustitucion: false,
+    legadoCondicionado: false,
+    inalienabilidad: false,
+    otra: false,
+    texto: '',
+  }
+}
+
+export function hayCondicionesEspeciales(condiciones: CondicionesEspeciales): boolean {
+  return condiciones.fiducia
+    || condiciones.sustitucion
+    || condiciones.legadoCondicionado
+    || condiciones.inalienabilidad
+    || condiciones.otra
+    || condiciones.texto.trim().length > 0
+}
+
 export interface Input {
   regimen: Regimen
   situacionConyugal: SituacionConyugal | null
@@ -138,6 +178,8 @@ export interface Input {
   conyugeViudo: boolean
   disposiciones: Disposiciones
   adjudicaciones: Adjudicacion[]
+  usufructoInmueble: UsufructoInmueble
+  condicionesEspeciales: CondicionesEspeciales
   comunidadIsd: ComunidadIsd | null
   quiereAlbacea: boolean | null
   nombreAlbacea: string
@@ -169,6 +211,7 @@ export type CodigoAviso =
   | 'REGIMEN_GANANCIALES'
   | 'DIFERENCIAS_ADJUDICACION'
   | 'SIN_DESCENDIENTES_LIBRE_TOTAL'
+  | 'USUFRUCTO_INMUEBLE'
 
 export type MotivoRevision =
   | 'REGIMEN_FORAL'
@@ -179,6 +222,7 @@ export type MotivoRevision =
   | 'BIENES_EXTRANJERO'
   | 'PACTO_SUCESORIO'
   | 'DONACIONES_PREVIAS'
+  | 'CONDICIONES_ESPECIALES'
 
 export type EstadoResultado =
   | 'ok'

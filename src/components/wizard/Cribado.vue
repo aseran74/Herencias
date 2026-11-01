@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hayCondicionesEspeciales } from '../../domain/succession'
 import { useWizardStore } from '../../stores/wizard'
 
 const store = useWizardStore()
@@ -16,6 +17,16 @@ const preguntas = computed(() => {
     ? todas.filter(([clave]) => clave !== 'hijoConDiscapacidad')
     : todas
 })
+
+const opcionesCondicion = [
+  ['fiducia', 'Fiducia'],
+  ['sustitucion', 'Sustitución vulgar o fideicomisaria'],
+  ['legadoCondicionado', 'Legado condicionado'],
+  ['inalienabilidad', 'Inalienabilidad'],
+  ['otra', 'Otra condición'],
+] as const
+
+const hayCondiciones = computed(() => hayCondicionesEspeciales(store.input.condicionesEspeciales))
 </script>
 
 <template>
@@ -31,6 +42,28 @@ const preguntas = computed(() => {
         <label><input v-model="store.input.flags[clave]" type="radio" :name="clave" :value="false"> No</label>
       </div>
     </fieldset>
-    <p v-if="store.bloqueado" class="aviso" data-testid="caso-bloqueante">Este caso requiere revisión profesional y se mostrará sin reparto.</p>
+
+    <fieldset class="condiciones-especiales" data-testid="condiciones-especiales">
+      <legend>Condiciones especiales para el despacho</legend>
+      <p class="nota">Marca lo que quieras que el abogado redacte. Cualquier marca o texto obliga a revisión profesional.</p>
+      <label v-for="[clave, etiqueta] in opcionesCondicion" :key="clave" class="check">
+        <input v-model="store.input.condicionesEspeciales[clave]" type="checkbox">
+        {{ etiqueta }}
+      </label>
+      <label class="campo-suelto">
+        Explica la condición o lo que debe preparar el despacho
+        <textarea
+          v-model="store.input.condicionesEspeciales.texto"
+          data-testid="condiciones-texto"
+          rows="4"
+          maxlength="2000"
+          placeholder="Por ejemplo: el piso de Madrid en usufructo vitalicio a mi hija, con prohibición de vender hasta que cumpla 30…"
+        />
+      </label>
+    </fieldset>
+
+    <p v-if="store.bloqueado || hayCondiciones" class="aviso" data-testid="caso-bloqueante">
+      Este caso requiere revisión profesional{{ hayCondiciones ? ' por las condiciones especiales' : '' }} y se mostrará sin reparto.
+    </p>
   </section>
 </template>

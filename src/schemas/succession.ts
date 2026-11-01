@@ -67,6 +67,27 @@ export const inputSucesionSchema = z.object({
     herederoId: id,
     bps,
   })).max(100),
+  usufructoInmueble: z.object({
+    activo: z.boolean(),
+    inmuebleId: z.string().trim().min(1).max(100).nullable(),
+    usufructuarioId: z.string().trim().min(1).max(100).nullable(),
+    nudaPropiedadIds: z.array(id).max(30),
+  }).default({ activo: false, inmuebleId: null, usufructuarioId: null, nudaPropiedadIds: [] }),
+  condicionesEspeciales: z.object({
+    fiducia: z.boolean(),
+    sustitucion: z.boolean(),
+    legadoCondicionado: z.boolean(),
+    inalienabilidad: z.boolean(),
+    otra: z.boolean(),
+    texto: z.string().trim().max(2000),
+  }).default({
+    fiducia: false,
+    sustitucion: false,
+    legadoCondicionado: false,
+    inalienabilidad: false,
+    otra: false,
+    texto: '',
+  }),
   comunidadIsd: z.enum([
     'andalucia', 'aragon', 'asturias', 'baleares', 'canarias', 'cantabria',
     'castilla_la_mancha', 'castilla_y_leon', 'cataluna', 'ceuta', 'extremadura',

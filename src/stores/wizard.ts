@@ -1,7 +1,15 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { facultadesIniciales } from '../content/albacea'
-import { calcularSucesion, detectarCasosBloqueantes, destinosColateralesIniciales, hayEstirpes, type Input } from '../domain/succession'
+import {
+  calcularSucesion,
+  condicionesEspecialesIniciales,
+  detectarCasosBloqueantes,
+  destinosColateralesIniciales,
+  hayEstirpes,
+  usufructoInmuebleInicial,
+  type Input,
+} from '../domain/succession'
 
 export const PASOS = [
   'Régimen', 'Patrimonio', 'Familia', 'Cribado', 'Estricta',
@@ -23,6 +31,8 @@ const inputInicial = (): Input => ({
   conyugeViudo: false,
   disposiciones: { mejora: null, libre: null },
   adjudicaciones: [],
+  usufructoInmueble: usufructoInmuebleInicial(),
+  condicionesEspeciales: condicionesEspecialesIniciales(),
   comunidadIsd: null,
   quiereAlbacea: null,
   nombreAlbacea: '',
@@ -116,8 +126,22 @@ export const useWizardStore = defineStore('succession-wizard', () => {
     if (numero === 8) {
       const sumas = new Map<string, number>()
       input.value.adjudicaciones.forEach((a) => sumas.set(a.inmuebleId, (sumas.get(a.inmuebleId) ?? 0) + a.bps))
-      return [...sumas.values()].some(total => total > 10000)
-        ? ['La adjudicación de un inmueble no puede superar el 100 %.'] : []
+      if ([...sumas.values()].some(total => total > 10000)) {
+        return ['La adjudicación de un inmueble no puede superar el 100 %.']
+      }
+      const usufructo = input.value.usufructoInmueble
+      if (!usufructo.activo) return []
+      if (!usufructo.inmuebleId) return ['Elige el inmueble sujeto a usufructo.']
+      if (!input.value.inmuebles.some(bien => bien.id === usufructo.inmuebleId)) {
+        return ['El inmueble del usufructo ya no está en el inventario.']
+      }
+      if (!usufructo.usufructuarioId) return ['Elige a quién dejas el usufructo.']
+      const ids = new Set(beneficiarios.value.map(persona => persona.id))
+      if (!ids.has(usufructo.usufructuarioId)) return ['El usufructuario ya no está entre los beneficiarios.']
+      if (usufructo.nudaPropiedadIds.some(id => !ids.has(id))) {
+        return ['Revisa quiénes reciben la nuda propiedad.']
+      }
+      return []
     }
     if (numero === 9) return input.value.comunidadIsd ? [] : ['Elige la comunidad donde residía el causante.']
     if (numero === 10) {
@@ -167,6 +191,8 @@ export const useWizardStore = defineStore('succession-wizard', () => {
       facultadesAlbacea: { ...facultadesIniciales(), ...copia.facultadesAlbacea },
       destinosColaterales: { ...destinosColateralesIniciales(), ...copia.destinosColaterales },
       atribucionEstricta: copia.atribucionEstricta ?? { tipo: null, inmuebleId: null },
+      usufructoInmueble: { ...usufructoInmuebleInicial(), ...copia.usufructoInmueble },
+      condicionesEspeciales: { ...condicionesEspecialesIniciales(), ...copia.condicionesEspeciales },
       flags: { ...inputInicial().flags, ...copia.flags },
       tieneHijos: copia.tieneHijos ?? (hayEstirpes(copia) ? true : copia.situacionConyugal === 'soltero' ? null : true),
     }

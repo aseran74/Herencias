@@ -34,6 +34,15 @@ function inputBase(caudalCent = 2_100_000 * EUR): Input {
     conyugeViudo: false,
     disposiciones: { mejora: null, libre: null },
     adjudicaciones: [],
+    usufructoInmueble: { activo: false, inmuebleId: null, usufructuarioId: null, nudaPropiedadIds: [] },
+    condicionesEspeciales: {
+      fiducia: false,
+      sustitucion: false,
+      legadoCondicionado: false,
+      inalienabilidad: false,
+      otra: false,
+      texto: '',
+    },
     comunidadIsd: null,
     quiereAlbacea: null,
     nombreAlbacea: '',
@@ -297,6 +306,49 @@ describe('núcleo sucesorio', () => {
     expect(resultado.caudalCent).toBe(2_100_100 * EUR)
     expect(resultado.motivos).toContain('DONACIONES_PREVIAS')
     expect(resultado.porHeredero).toEqual([])
+  })
+
+  it('T16 bloquea por condiciones especiales pedidas al despacho', () => {
+    const input = inputBase()
+    input.condicionesEspeciales.fiducia = true
+    input.condicionesEspeciales.texto = 'Fiducia a favor de Ana hasta los 30 años'
+
+    const resultado = calcularSucesion(input)
+
+    expect(resultado.estado).toBe('revision_obligatoria')
+    expect(resultado.motivos).toContain('CONDICIONES_ESPECIALES')
+    expect(resultado.porHeredero).toEqual([])
+  })
+
+  it('T17 avisa el usufructo de inmueble sin bloquear el reparto', () => {
+    const input = inputBase()
+    input.inmuebles = [{
+      id: 'casa',
+      nombre: 'Vivienda',
+      naturaleza: 'privativo',
+      valorCent: 100_000 * EUR,
+      porcentajeCausanteBps: 10_000,
+      cargasCent: 0,
+    }]
+    input.otrosActivos = [{
+      id: 'activo',
+      tipo: 'cuenta',
+      naturaleza: 'privativo',
+      valorCent: 2_000_000 * EUR,
+      porcentajeCausanteBps: 10_000,
+    }]
+    input.usufructoInmueble = {
+      activo: true,
+      inmuebleId: 'casa',
+      usufructuarioId: 'a',
+      nudaPropiedadIds: ['b', 'c'],
+    }
+
+    const resultado = calcularSucesion(input)
+
+    expect(resultado.estado).toBe('ok_con_avisos')
+    expect(resultado.avisos).toContain('USUFRUCTO_INMUEBLE')
+    expect(resultado.porHeredero.length).toBeGreaterThan(0)
   })
 
   it('T15 devuelve HEREDERO_INEXISTENTE para disposiciones desconocidas', () => {

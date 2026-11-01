@@ -126,6 +126,20 @@ export interface Input {
   conyugeViudo: boolean
   disposiciones: Disposiciones
   adjudicaciones: Adjudicacion[]
+  usufructoInmueble: {
+    activo: boolean
+    inmuebleId: string | null
+    usufructuarioId: string | null
+    nudaPropiedadIds: string[]
+  }
+  condicionesEspeciales: {
+    fiducia: boolean
+    sustitucion: boolean
+    legadoCondicionado: boolean
+    inalienabilidad: boolean
+    otra: boolean
+    texto: string
+  }
   comunidadIsd: ComunidadIsd | null
   quiereAlbacea: boolean | null
   nombreAlbacea: string
@@ -168,22 +182,22 @@ El resultado contiene estado, errores, avisos, motivos, caudal, tercios, desglos
 
 ## 7. Casos calientes
 
-Bloquean reparto: régimen distinto de común; desheredación, discapacidad, empresa familiar, bienes extranjeros, pacto sucesorio, testamento anterior o donaciones previas.
+Bloquean reparto: régimen distinto de común; desheredación, discapacidad, empresa familiar, bienes extranjeros, pacto sucesorio, testamento anterior, donaciones previas o condiciones especiales (fiducia, sustitución, legado condicionado, inalienabilidad, otra o texto libre).
 
-Avisan sin bloquear: representación por premoriencia, cónyuge viudo, gananciales y diferencias de adjudicación.
+Avisan sin bloquear: representación por premoriencia, cónyuge viudo, gananciales, diferencias de adjudicación y usufructo de un inmueble concreto (orientativo, sin valoración en euros).
 
-El CTA aparece siempre; en casos bloqueantes es el único resultado.
+El CTA aparece siempre; en casos bloqueantes es el único resultado. Si hay condiciones especiales, el CTA principal es «Que el despacho prepare la herencia».
 
 ## 8. Wizard
 
 1. Régimen: vecindad civil; situación conyugal explícita (cónyuge vivo, viudo, soltero o separado/divorciado); y régimen económico cuando hubo matrimonio. Si es soltero, indica si hay hijos y si quiere dejar a hermanos, sobrinos, nietos, un familiar cercano o una ONG.
 2. Patrimonio: inmuebles, participación, cargas, otros activos y deudas.
 3. Familia: hijos, premoriencia y descendientes; o, si el soltero no tiene hijos, los hermanos, sobrinos, familiares u ONG instituidos. La situación del cónyuge ya se recoge en el paso 1.
-4. Cribado: flags sí/no.
+4. Cribado: flags sí/no y condiciones especiales opcionales (checkboxes + texto libre) que obligan a revisión del despacho.
 5. Legítima estricta: automática y visual. Opcionalmente se puede dejar un inmueble concreto o sus rentas de alquiler a los legitimarios, sin alterar el importe del tercio.
 6. Mejora: porcentajes a descendientes, suma validada en vivo.
 7. Libre: personas o entidades.
-8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias.
+8. Adjudicación: arrastrar inmueble a beneficiarios y mostrar diferencias. Opcionalmente, legar el usufructo de un inmueble a una persona y la nuda propiedad a herederos concretos (o a los instituidos por defecto); sin valoración en euros.
 9. Impuesto: comunidad de residencia habitual del causante y coste orientativo por heredero.
 10. Albacea: sí o no; si es sí, un descendiente u otra persona, y facultades expresas sobre cuentas, pagos, deudas y conservación de bienes.
 11. Resumen: barras, impuesto, datos del otorgante (nombre, DNI/NIE, domicilio, localidad), borrador orientativo de testamento abierto imprimible y descargable en PDF, guía abogado vs notaría con directorio, avisos, texto legal y lead. El borrador solo se redacta si hay reparto; no es escritura. Opcionalmente el usuario puede grabar un mensaje breve (máximo 30 s) y pedir cita express, o enviar un testamento express de urgencia: lee en cámara un guion en primera persona (máximo 120 s) y lo manda al despacho. Ni el vídeo ni el texto son testamento; sirven como prueba de voluntad para actuar ante notario, cónsul o testamento ológrafo / en peligro de muerte.
@@ -234,6 +248,8 @@ Tabla `leads(id, created_at, nombre, email, telefono, consentimiento_rgpd, conse
 - **T12:** cónyuge viudo: aviso R9 sin variar importes.
 - **T13:** inmuebles 1.200.000 € a hijo 1 y 900.000 € al 50 % a hijos 2 y 3: diferencias +500.000 / −250.000 / −250.000.
 - **T14:** donaciones previas: revisión obligatoria.
+- **T16:** condiciones especiales: revisión obligatoria y CTA «Que el despacho prepare la herencia».
+- **T17:** usufructo de inmueble: aviso orientativo; aparece en borrador y guion sin euros.
 - **T15:** ID inexistente en disposiciones: `HEREDERO_INEXISTENTE`.
 - **T16:** para cualquier entrada válida, la suma de totales por heredero es el caudal.
 - **T17:** soltero sin hijos, caudal 2.100.000 € y tres sobrinos: estricta y mejora 0; cada sobrino 700.000 € de libre disposición, con aviso de posible legítima de ascendientes.

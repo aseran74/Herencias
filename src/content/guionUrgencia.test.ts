@@ -21,6 +21,15 @@ const input: Input = {
   conyugeViudo: false,
   disposiciones: { mejora: null, libre: null },
   adjudicaciones: [],
+  usufructoInmueble: { activo: false, inmuebleId: null, usufructuarioId: null, nudaPropiedadIds: [] },
+  condicionesEspeciales: {
+    fiducia: false,
+    sustitucion: false,
+    legadoCondicionado: false,
+    inalienabilidad: false,
+    otra: false,
+    texto: '',
+  },
   comunidadIsd: null,
   quiereAlbacea: false,
   nombreAlbacea: '',
@@ -42,6 +51,31 @@ const input: Input = {
 }
 
 describe('guion de urgencia', () => {
+  it('menciona el usufructo de un inmueble', () => {
+    const conUsufructo: Input = {
+      ...input,
+      inmuebles: [{
+        id: 'casa',
+        nombre: 'Piso de Madrid',
+        naturaleza: 'privativo',
+        valorCent: 210_000_000,
+        porcentajeCausanteBps: 10_000,
+        cargasCent: 0,
+      }],
+      usufructoInmueble: {
+        activo: true,
+        inmuebleId: 'casa',
+        usufructuarioId: 's1',
+        nudaPropiedadIds: ['s2', 's3'],
+      },
+    }
+    const texto = redactarGuionUrgencia(conUsufructo, calcularSucesion(conUsufructo), 'Pedro Gil')
+    expect(texto).toContain('usufructo de Piso de Madrid a Luis')
+    expect(texto).toContain('Marta')
+    expect(texto).toContain('Elena')
+    expect(texto).not.toContain('€')
+  })
+
   it('redacta un texto en primera persona para leerlo en cámara', () => {
     const texto = redactarGuionUrgencia(
       input,

@@ -43,6 +43,24 @@ export function redactarGuionUrgencia(
     lineas.push('Pido al despacho que protocolice de urgencia el reparto que he indicado en esta simulación.')
   }
 
+  const usufructo = input.usufructoInmueble
+  if (usufructo.activo && usufructo.inmuebleId && usufructo.usufructuarioId) {
+    const bien = input.inmuebles.find(item => item.id === usufructo.inmuebleId)?.nombre ?? 'un inmueble'
+    const usufructuario = input.beneficiariosLibre.find(persona => persona.id === usufructo.usufructuarioId)?.nombre
+      ?? input.hijos.find(hijo => hijo.id === usufructo.usufructuarioId)?.nombre
+      ?? input.hijos.flatMap(hijo => hijo.descendientes).find(nieto => nieto.id === usufructo.usufructuarioId)?.nombre
+      ?? 'la persona indicada'
+    const nuda = usufructo.nudaPropiedadIds.length
+      ? usufructo.nudaPropiedadIds.map((id) =>
+        input.beneficiariosLibre.find(persona => persona.id === id)?.nombre
+          ?? input.hijos.find(hijo => hijo.id === id)?.nombre
+          ?? input.hijos.flatMap(hijo => hijo.descendientes).find(nieto => nieto.id === id)?.nombre
+          ?? id,
+      ).join(', ')
+      : 'los herederos de este testamento'
+    lineas.push(`Dejo el usufructo de ${bien} a ${usufructuario}, y la nuda propiedad a ${nuda}.`)
+  }
+
   if (input.quiereAlbacea && input.nombreAlbacea.trim()) {
     lineas.push(`Nombro albacea a ${input.nombreAlbacea.trim()}.`)
   }

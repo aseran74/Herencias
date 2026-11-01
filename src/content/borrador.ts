@@ -80,6 +80,49 @@ function normalizarOtorgante(otorgante: DatosOtorgante | string): DatosOtorgante
   return otorgante
 }
 
+export function hayUsufructoInmuebleCompleto(input: Input): boolean {
+  const usufructo = input.usufructoInmueble
+  return Boolean(usufructo.activo && usufructo.inmuebleId && usufructo.usufructuarioId)
+}
+
+/** Redacción formal del usufructo para el borrador, el PDF y el resumen, también si el caso va a revisión. */
+export function redactarClausulaUsufructo(
+  input: Input,
+  resultado: Resultado | null = null,
+  titulo = 'Usufructo de inmueble',
+): Clausula | null {
+  if (!hayUsufructoInmuebleCompleto(input)) return null
+  const usufructo = input.usufructoInmueble
+  const bien = input.inmuebles.find(item => item.id === usufructo.inmuebleId)
+  const nombreBien = bien?.nombre ?? 'el inmueble indicado'
+  const usufructuario = resultado
+    ? nombreDe(input, resultado, usufructo.usufructuarioId!)
+    : (
+      input.beneficiariosLibre.find(persona => persona.id === usufructo.usufructuarioId)?.nombre
+      ?? input.hijos.find(hijo => hijo.id === usufructo.usufructuarioId)?.nombre
+      ?? input.hijos.flatMap(hijo => hijo.descendientes).find(nieto => nieto.id === usufructo.usufructuarioId)?.nombre
+      ?? 'la persona indicada'
+    )
+  const nuda = usufructo.nudaPropiedadIds.length
+    ? usufructo.nudaPropiedadIds.map((id) => {
+      if (resultado) return nombreDe(input, resultado, id)
+      return input.beneficiariosLibre.find(persona => persona.id === id)?.nombre
+        ?? input.hijos.find(hijo => hijo.id === id)?.nombre
+        ?? input.hijos.flatMap(hijo => hijo.descendientes).find(nieto => nieto.id === id)?.nombre
+        ?? id
+    }).join(', ')
+    : 'los herederos instituidos en este testamento'
+
+  return {
+    titulo,
+    parrafos: [
+      `Dispone que ${nombreBien} quede sujeto a usufructo vitalicio a favor de ${usufructuario}, quien podrá usar y disfrutar el bien mientras viva, sin disponer de la propiedad.`,
+      `La nuda propiedad de ${nombreBien} corresponde a ${nuda}.`,
+      'Esta disposición forma parte de la voluntad sucesoria del otorgante. No valora el usufructo en dinero; el notario concretará su alcance, duración y efectos en la escritura.',
+    ],
+  }
+}
+
 export function redactarBorrador(
   input: Input,
   resultado: Resultado,
@@ -93,8 +136,13 @@ export function redactarBorrador(
   const quien = nombreOtorgante(datos) || '________________________________'
   const caudal = resultado.caudalCent
   const inventario = [
-    ...input.inmuebles.map(inmueble =>
-      `${inmueble.nombre}, en la participación del causante del ${porcentaje(inmueble.porcentajeCausanteBps)}${inmueble.cargasCent ? ', con las cargas que tenga al tiempo de la partición' : ''}.`),
+    ...input.inmuebles.map((inmueble) => {
+      const base = `${inmueble.nombre}, en la participación del causante del ${porcentaje(inmueble.porcentajeCausanteBps)}${inmueble.cargasCent ? ', con las cargas que tenga al tiempo de la partición' : ''}`
+      if (hayUsufructoInmuebleCompleto(input) && input.usufructoInmueble.inmuebleId === inmueble.id) {
+        return `${base}. Queda sujeto al usufructo vitalicio dispuesto más adelante.`
+      }
+      return `${base}.`
+    }),
     ...input.otrosActivos.map(activo =>
       `${TIPO_ACTIVO[activo.tipo]}, en la participación del causante del ${porcentaje(activo.porcentajeCausanteBps)}.`),
   ]
@@ -205,42 +253,60 @@ export function redactarBorrador(
     },
   ]
 
+  let numero = 7
   if (adjudicacion.length) {
     clausulas.push({
-      titulo: 'Séptima. Adjudicación de inmuebles',
+      titulo: `${ordinal(numero)}. Adjudicación de inmuebles`,
       parrafos: [
         ...adjudicacion,
         resultado.patrimonioPendienteAdjudicarCent > 0
           ? 'Lo que no quede adjudicado se reparte conforme a las cuotas de este testamento.'
           : 'La adjudicación indicada cubre los inmuebles declarados.',
         'Si al partir, el valor de mercado de lo adjudicado no coincide con la cuota, la diferencia se compensará en metálico.',
-      ],
+        hayUsufructoInmuebleCompleto(input)
+          ? 'Lo adjudicado en propiedad plena queda sin perjuicio del usufructo vitalicio que se dispone a continuación, si afecta al mismo inmueble.'
+          : '',
+      ].filter(Boolean),
     })
+    numero += 1
   }
 
   if (resultado.parteConyugeGanancialCent > 0) {
     clausulas.push({
-      titulo: 'Liquidación de gananciales',
+      titulo: `${ordinal(numero)}. Liquidación de gananciales`,
       parrafos: ['La mitad neta de los bienes identificados como gananciales corresponde al cónyuge y queda fuera de la herencia. Solo la mitad atribuible al causante integra el caudal hereditario.'],
     })
+    numero += 1
   }
 
   if (input.situacionConyugal === 'conyuge_vivo') {
     clausulas.push({
-      titulo: 'Cónyuge viudo',
+      titulo: `${ordinal(numero)}. Cónyuge viudo`,
       parrafos: ['Se reconoce al cónyuge no separado el usufructo legal del tercio de mejora. Este borrador define la base en porcentaje, pero no valora económicamente el usufructo; lo concretará el notario.'],
     })
+    numero += 1
+  }
+
+  const clausulaUsufructo = redactarClausulaUsufructo(
+    input,
+    resultado,
+    `${ordinal(numero)}. Legado de usufructo`,
+  )
+  if (clausulaUsufructo) {
+    clausulas.push(clausulaUsufructo)
+    numero += 1
   }
 
   clausulas.push({
-    titulo: 'Albacea',
+    titulo: `${ordinal(numero)}. Albacea`,
     parrafos: input.quiereAlbacea && input.nombreAlbacea.trim()
       ? parrafosAlbacea(input.nombreAlbacea.trim(), input.facultadesAlbacea)
       : ['No nombra albacea.'],
   })
+  numero += 1
 
   clausulas.push({
-    titulo: 'Cierre',
+    titulo: `${ordinal(numero)}. Cierre`,
     parrafos: [
       'Así lo dice y otorga. El notario completará la identidad plena, las advertencias legales, la lectura íntegra y las firmas.',
       `Firma del otorgante (${quien}): ________________________________`,
@@ -249,4 +315,23 @@ export function redactarBorrador(
   })
 
   return clausulas
+}
+
+function ordinal(numero: number): string {
+  const etiquetas = [
+    '',
+    'Primera',
+    'Segunda',
+    'Tercera',
+    'Cuarta',
+    'Quinta',
+    'Sexta',
+    'Séptima',
+    'Octava',
+    'Novena',
+    'Décima',
+    'Undécima',
+    'Duodécima',
+  ]
+  return etiquetas[numero] ?? `Cláusula ${numero}`
 }
